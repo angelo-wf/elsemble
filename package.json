@@ -1,0 +1,19 @@
+{
+  "name": "elsemble",
+  "type": "module",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "tsc && node build/test.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "tsc": "tsc",
+    "watch": "tsc --watch"
+  },
+  "keywords": [],
+  "author": "angelo_wf",
+  "license": "MIT",
+  "description": "Assembler for various 8-bit architectures",
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}
