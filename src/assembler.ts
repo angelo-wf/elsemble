@@ -1,5 +1,7 @@
-import { ExpressionResult } from "./expressionhandler.js";
-import { Line } from "./lineparser.js";
+import { Directive } from "./directives.js";
+import { ExpressionHandler, ExpressionResult } from "./expressionhandler.js";
+import { ExpressionNode } from "./expressionparser.js";
+import { Line, LineType } from "./lineparser.js";
 import { ReadHandler } from "./readhandler.js";
 
 type IncludeItem = {
@@ -43,6 +45,7 @@ type Label = {
 export class Assembler {
 
   private readHandler = new ReadHandler(this);
+  private expressionHandler = new ExpressionHandler(this);
 
   private includeStack: IncludeItem[] = [];
   private flowStack: FlowItem[] = [];
@@ -118,11 +121,31 @@ export class Assembler {
       // handle line
       let flowItem = this.flowStack.at(-1)!;
       let active = flowItem.active && flowItem.taken;
-
-      if(line.label && active) {
-
+      // define label
+      if(line.label && line.type !== LineType.ASSIGNMENT && active) {
+        let name = this.defineLabel(line.label, this.pc, false);
+        if(!name.includes(".") && !name.includes("@")) {
+          this.globalLabel = name;
+        }
       }
-
+      // handle line
+      switch(line.type) {
+        case LineType.ASSIGNMENT:
+          if(!active) break;
+          this.defineLabel(line.label, this.eval(line.value), line.reassignment);
+          break;
+        case LineType.DIRECTIVE:
+          this.handleDirective(line.directive, line.arguments);
+          break;
+        case LineType.OPCODE:
+          if(!active) break;
+          break;
+        case LineType.MACRO:
+          if(!active) break;
+          break;
+        case LineType.NONE: break;
+        default: throw (line satisfies never);
+      }
       includeItem.line++;
     }
   }
@@ -148,23 +171,45 @@ export class Assembler {
     return this.pc;
   }
 
+  private defineLabel(label: string, value: ExpressionResult, reassignment: boolean): string {
+    let name = this.expandLabelName(label)[0];
+    // if no name returned, an error was logged by expandLabelName
+    if(!name) return "";
+    let current = this.labels.get(name);
+    if(current) {
+      if(current.defined && (!current.redefinable || !reassignment)) {
+        this.logError(`Attempted to redefined label '${this.getLabelName(name)}'`);
+      }
+      // if this the first assigment or a allowed redefinition
+      if(current.redefinable || !current.defined) {
+        // if it is not a reassignment (so first assignment), indicate if labels changed
+        if(!current.redefinable && current.value !== value) this.labelsChanged = true; 
+        current.value = value;
+      }
+      current.defined = true;
+    } else {
+      this.labels.set(name, {value, defined: true, redefinable: reassignment});
+      this.labelsChanged = true;
+    }
+    return name;
+  }
+
   // get result for evaluating label, or 0 if it is not known yet
-  getLabelValue(label: string): ExpressionResult {
-    let expandedNames = this.expandLabelName(label);
+  getLabelValue(name: string): ExpressionResult {
+    let expandedNames = this.expandLabelName(name);
     // try each label to test in order
     for(let name of expandedNames) {
       if(this.labels.has(name)) {
         let label = this.labels.get(name)!;
         // don't allow getting value of redefinable label
         if(label.redefinable && !label.defined) {
-          // TODO: print nicer
-          this.logError(`Accessed label '${label}' before first definition`);
+          this.logError(`Accessed label '${this.getLabelName(name)}' before first definition`);
         }
         return label.value;
       }
     }
     // value not known yet, default to 0
-    this.logError(`Undefined label '${label}'`);
+    this.logError(`Undefined label '${expandedNames[0]}'`);
     return 0;
   }
 
@@ -186,14 +231,33 @@ export class Assembler {
     return [`${this.scope}:${label}`, ...(this.scope ? [`:${label}`] : [])];
   }
 
+  private getLabelName(name: string): string {
+    if(name.startsWith("@")) return name.slice(name.indexOf("@", 1));
+    return name.startsWith(":") ? name.slice(1) : name;
+  }
+
+  private eval(node: ExpressionNode): ExpressionResult {
+    return this.expressionHandler.evaluateExpression(node);
+  }
+
   // value testing
 
   // check and turn result into number
   checkNumber(val: ExpressionResult): number {
     if(typeof val === "string") {
-      this.logError("Expected number, got string");
+      this.logError("Expected number");
       return 0;
     }
     return val;
+  }
+
+  // directive handling
+
+  private handleDirective(directive: Directive, args: (ExpressionNode | string)[]): void {
+    let flowItem = this.flowStack.at(-1)!;
+    let active = flowItem.active && flowItem.taken;
+
+    switch(directive) {
+    }
   }
 }
