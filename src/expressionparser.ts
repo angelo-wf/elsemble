@@ -1,25 +1,74 @@
 import { checkLabel, ParserError } from "./lineparser.js";
 
 export enum BinaryOperator {
+  MULTIPLY = "*",
+  DIVIDE = "/",
+  MODULUS = "%",
   ADD = "+",
-  SUBTRACT = "-"
+  SUBTRACT = "-",
+  LSHIFT = "<<",
+  RSHIFT = ">>",
+  AND = "&",
+  OR = "|",
+  XOR = "^",
+  LT = "<",
+  LTE = "<=",
+  GT = ">",
+  GTE = ">=",
+  EQ = "==",
+  NEQ = "!=",
+  LAND = "&&",
+  LOR = "||",
+  LXOR = "^^"
 };
 
 export enum UnaryOperator {
   INVERT = "~",
-  NOT = "!"
+  NOT = "!",
+  NOP = "+",
+  NEGATE = "-",
+  LOBYTE = "<",
+  HIBYTE = ">",
+  BANK = "^",
+  LOWORD = "&"
 };
 
-type OperatorInfo<K> = {op: K, level: number};
+type OperatorInfo<K> = {
+  op: K,
+  level: number
+};
 
 const binaryOps: {[key in BinaryOperator]: OperatorInfo<key>} = {
-  "+": {op: BinaryOperator.ADD, level: 1},
-  "-": {op: BinaryOperator.SUBTRACT, level: 1},
+  [BinaryOperator.MULTIPLY]: {op: BinaryOperator.MULTIPLY, level: 9},
+  [BinaryOperator.DIVIDE]: {op: BinaryOperator.DIVIDE, level: 9},
+  [BinaryOperator.MODULUS]: {op: BinaryOperator.MODULUS, level: 9},
+  [BinaryOperator.ADD]: {op: BinaryOperator.ADD, level: 8},
+  [BinaryOperator.SUBTRACT]: {op: BinaryOperator.SUBTRACT, level: 8},
+  [BinaryOperator.LSHIFT]: {op: BinaryOperator.LSHIFT, level: 7},
+  [BinaryOperator.RSHIFT]: {op: BinaryOperator.RSHIFT, level: 7},
+  [BinaryOperator.AND]: {op: BinaryOperator.AND, level: 6},
+  [BinaryOperator.OR]: {op: BinaryOperator.OR, level: 5},
+  [BinaryOperator.XOR]: {op: BinaryOperator.XOR, level: 5},
+  [BinaryOperator.LT]: {op: BinaryOperator.LT, level: 4},
+  [BinaryOperator.LTE]: {op: BinaryOperator.LTE, level: 4},
+  [BinaryOperator.GT]: {op: BinaryOperator.GT, level: 4},
+  [BinaryOperator.GTE]: {op: BinaryOperator.GTE, level: 4},
+  [BinaryOperator.EQ]: {op: BinaryOperator.EQ, level: 3},
+  [BinaryOperator.NEQ]: {op: BinaryOperator.NEQ, level: 3},
+  [BinaryOperator.LAND]: {op: BinaryOperator.LAND, level: 2},
+  [BinaryOperator.LOR]: {op: BinaryOperator.LOR, level: 1},
+  [BinaryOperator.LXOR]: {op: BinaryOperator.LXOR, level: 1}
 };
 
 const UnaryOps: {[key in UnaryOperator]: OperatorInfo<key>} = {
-  "~": {op: UnaryOperator.INVERT, level: 0},
-  "!": {op: UnaryOperator.NOT, level: 0},
+  [UnaryOperator.INVERT]: {op: UnaryOperator.INVERT, level: 0},
+  [UnaryOperator.NOT]: {op: UnaryOperator.NOT, level: 0},
+  [UnaryOperator.NOP]: {op: UnaryOperator.NOP, level: 0},
+  [UnaryOperator.NEGATE]: {op: UnaryOperator.NEGATE, level: 0},
+  [UnaryOperator.LOBYTE]: {op: UnaryOperator.LOBYTE, level: 0},
+  [UnaryOperator.HIBYTE]: {op: UnaryOperator.HIBYTE, level: 0},
+  [UnaryOperator.BANK]: {op: UnaryOperator.BANK, level: 0},
+  [UnaryOperator.LOWORD]: {op: UnaryOperator.LOWORD, level: 0}
 };
 
 export enum NodeType {
@@ -51,10 +100,10 @@ export type ExpressionNode = {
   value: number | string
 } | {
   type: NodeType.CHAR,
-  value: string
+  char: string
 } | {
   type: NodeType.SUBEXPR,
-  value: ExpressionNode
+  expression: ExpressionNode
 } | {
   type: NodeType.LABEL,
   label: string
@@ -118,8 +167,8 @@ function parseNonOp(expr: string): [ExpressionNode, string] {
     // parse subexpression, and check that it is followed by closing bracket
     let subExpression: ExpressionNode;
     [subExpression, expr] = parseExpression(expr);
-    if(!expr.startsWith(")")) throw new ParserError("Unclosed parenteses");
-    let newNode: ExpressionNode = {type: NodeType.SUBEXPR, value: subExpression};
+    if(!expr.startsWith(")")) throw new ParserError("Unclosed parentheses");
+    let newNode: ExpressionNode = {type: NodeType.SUBEXPR, expression: subExpression};
     return [newNode, expr.slice(1)];
   }
   // test for string constant
@@ -131,7 +180,7 @@ function parseNonOp(expr: string): [ExpressionNode, string] {
   // check for character constant
   let charTest = expr.match(/^'([^\\]|\\[^u]|\\u\([\da-fA-F]+\))'/);
   if(charTest) {
-    let newNode: ExpressionNode = {type: NodeType.CHAR, value: handleStringEscapes(charTest[1]!)};
+    let newNode: ExpressionNode = {type: NodeType.CHAR, char: handleStringEscapes(charTest[1]!)};
     return [newNode, expr.slice(charTest[0].length)];
   }
   // check for number literal
@@ -151,7 +200,7 @@ function parseNonOp(expr: string): [ExpressionNode, string] {
     let newNode: ExpressionNode = {type: NodeType.PC};
     return [newNode, expr.slice(1)];
   }
-  throw new ParserError("Truncated or no expression");
+  throw new ParserError("Truncated or missing expression");
 }
 
 // remove unneeded spaces and escape commas in strings, used for opcode parsing, goes until line end or comment

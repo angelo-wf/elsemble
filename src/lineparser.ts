@@ -1,3 +1,4 @@
+import { Directive, parseDirectiveLine } from "./directives.js";
 import { cleanExpression, consumeSpaces, ExpressionNode, parseExpression } from "./expressionparser.js";
 
 export class ParserError extends Error {
@@ -30,8 +31,8 @@ export type Line = {
   argument: string
 } | {
   type: LineType.DIRECTIVE,
-  directive: string,
-  arguments: ExpressionNode[]
+  directive: Directive,
+  arguments: (ExpressionNode | string)[]
 } | {
   type: LineType.MACRO,
   macro: string,
@@ -58,25 +59,24 @@ export function parseLine(line: string): Line {
     line = line.slice(labelTest[0].length);
   }
   // check for directive or macro
-  let dirTest = line.match(/^\s*([\.!]\w[\w\.]*)\s+/);
+  let dirTest = line.match(/^\s*([\.!]\w[\w\.]*)\s*/);
   if(dirTest) {
     let directive = dirTest[1]!;
     let argumentStr = line.slice(dirTest[0].length);
-    let args: ExpressionNode[] = [];
-    if(!checkLineEnd(argumentStr)) {
-      [args, argumentStr] = parseArgumentList(argumentStr);
-      if(!checkLineEnd(argumentStr)) throw new ParserError("Trailing characters after expression");
-    }
     if(directive.startsWith("!")) {
+      let args: ExpressionNode[] = [];
+      if(!checkLineEnd(argumentStr)) {
+        [args, argumentStr] = parseArgumentList(argumentStr);
+        if(!checkLineEnd(argumentStr)) throw new ParserError("Trailing characters after expression");
+      }
       return {type: LineType.MACRO, label, macro: directive.slice(1), arguments: args};
     } else {
-      // parse directive arguments for being correct (handle non-expressions and directive existence and such)
-      // also handle arch (needed for opcode parsing)
-      return {type: LineType.DIRECTIVE, label, directive: directive.slice(1), arguments: args};
+      let [args, dir] = parseDirectiveLine(directive.slice(1), argumentStr);
+      return {type: LineType.DIRECTIVE, label, directive: dir, arguments: args};
     }
   }
   // check for opcode
-  let opcodeTest = line.match(/^\s*(\w[\w\.]*)\s+/);
+  let opcodeTest = line.match(/^\s*(\w[\w\.]*)\s*/);
   if(opcodeTest) {
     let opcode = opcodeTest[1]!;
     let argumentStr = cleanExpression(line.slice(opcodeTest[0].length));
@@ -130,7 +130,8 @@ export function checkLabel(label: string): string {
   throw new ParserError(`Invalid label '${label}'`);
 }
 
-function checkLineEnd(line: string): boolean {
+// check for comment or end of line
+export function checkLineEnd(line: string): boolean {
   line = consumeSpaces(line);
   if(line.length > 0 && !line.startsWith(";")) {
     return false;

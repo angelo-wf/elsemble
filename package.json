@@ -14,6 +14,7 @@
   "license": "MIT",
   "description": "Assembler for various 8-bit architectures",
   "devDependencies": {
+    "@types/node": "^22.15.30",
     "typescript": "^5.8.3"
   }
 }
