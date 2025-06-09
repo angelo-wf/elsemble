@@ -2,9 +2,9 @@
   "name": "elsemble",
   "type": "module",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "build/main.js",
   "scripts": {
-    "start": "tsc && node build/test.js",
+    "start": "tsc && node build/main.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "tsc": "tsc",
     "watch": "tsc --watch"

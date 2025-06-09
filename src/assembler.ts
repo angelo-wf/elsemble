@@ -1,3 +1,4 @@
+import { Arguments } from "./arguments.js";
 import { Directive } from "./directives.js";
 import { ExpressionHandler, ExpressionResult } from "./expressionhandler.js";
 import { ExpressionNode } from "./expressionparser.js";
@@ -50,11 +51,16 @@ type Macro = {
   line: number
 };
 
+const defaultPassLimit = 10;
+const stackLimit = 256;
+
 export class Assembler {
 
   private readHandler = new ReadHandler(this);
   private expressionHandler = new ExpressionHandler(this);
-  private writeHandler = new WriteHandler(this);
+  private writeHandler: WriteHandler;
+
+  private arguments: Arguments;
 
   private includeStack: IncludeItem[] = [];
   private flowStack: FlowItem[] = [];
@@ -75,14 +81,15 @@ export class Assembler {
   private pc = 0;
   private fillByte = 0;
 
-  constructor() {
-
+  constructor(argument: Arguments) {
+    this.arguments = argument;
+    this.writeHandler = new WriteHandler(this, argument.outputFile, argument.listingFile, argument.symbolFile);
   }
 
   // assemble using given arguments, returns if it succeeded
   assemble(): boolean {
-    // TODO: configurable pass limit
-    while(this.passNum < 10) {
+    while(this.passNum < (this.arguments.passLimit ?? defaultPassLimit)) {
+      if(this.arguments.verbose) console.log(`Pass ${this.passNum + 1}...`);
       this.doPass();
       if(!this.labelsChanged) break;
     }
@@ -96,6 +103,7 @@ export class Assembler {
       return false;
     }
     // succesfull assembly, write output
+    if(this.arguments.verbose) console.log(`Writing output...`);
     this.writeHandler.writeFiles();
     if(this.passError) {
       // error while writing files
@@ -126,7 +134,7 @@ export class Assembler {
     this.pc = 0;
     this.fillByte = 0;
     // handle input file (as if include)
-    this.handleFile("testing/test.s");
+    this.handleFile(this.arguments.inputFile);
     // check that no items (if, macro, etc) were left open
     if(this.flowStack.length > 1) {
       this.logError(`Unclosed ${this.flowStack.at(-1)!.type === FlowType.IF ? ".if" : ".repeat"} statement`);
@@ -145,7 +153,7 @@ export class Assembler {
   }
 
   private handleFile(path: string): void {
-    if(this.includeStack.length > 256) return this.logError("Include/macro stack limit reached");
+    if(this.includeStack.length > stackLimit) return this.logError("Include/macro stack limit reached");
     // parse, add include item, run, and pop item
     let parsed = this.readHandler.readAssemblyFile(path);
     this.includeStack.push({path, line: 1, offset: 1, isMacro: false});
@@ -157,7 +165,7 @@ export class Assembler {
     if(!this.macros.has(name)) return this.logError(`Undefined macro '${name}'`);
     let macro = this.macros.get(name)!;
     if(macro.args.length !== args.length) return this.logError("Incorrect amount of arguments");
-    if(this.includeStack.length > 256) return this.logError("Include/macro stack limit reached");
+    if(this.includeStack.length > stackLimit) return this.logError("Include/macro stack limit reached");
     // evaluate args, then add new block and define macro arguments
     let argValues = args.map(a => this.eval(a));
     this.blockStack.push(`@m${this.blockNum++}`);
@@ -442,10 +450,7 @@ export class Assembler {
   }
 
   private dirElif(test: ExpressionNode, flowItem: FlowItem): void {
-    if(flowItem.type !== FlowType.IF || flowItem.inElse) {
-      this.logError("Unexpected .elif");
-      return;
-    }
+    if(flowItem.type !== FlowType.IF || flowItem.inElse) return this.logError("Unexpected .elif");
     if(flowItem.active) {
       let res = this.eval(test) !== 0;
       flowItem.taken = !flowItem.found && res;
@@ -454,10 +459,7 @@ export class Assembler {
   }
 
   private dirElse(flowItem: FlowItem): void {
-    if(flowItem.type !== FlowType.IF || flowItem.inElse) {
-      this.logError("Unexpected .else");
-      return;
-    }
+    if(flowItem.type !== FlowType.IF || flowItem.inElse) return this.logError("Unexpected .else");
     if(flowItem.active) {
       flowItem.taken = !flowItem.found;
       flowItem.inElse = true;
@@ -479,10 +481,9 @@ export class Assembler {
 
   private dirEndRepeat(flowItem: FlowItem): void {
     let includeItem = this.includeStack.at(-1)!;
-    if(flowItem.type !== FlowType.REPEAT || flowItem.includeItem !== includeItem || !this.blockStack.at(-1)!.startsWith("@r")) {
-      this.logError("Unexpected .endrepeat");
-      return;
-    }
+    if(flowItem.type !== FlowType.REPEAT) return this.logError("Unexpected .endrepeat");
+    if(!this.blockStack.at(-1)!.startsWith("@r")) return this.logError("Unexpected .endrepeat within macro");
+    if(flowItem.includeItem !== includeItem) return this.logError(".repeat and .endrepeat must be in same file or macro");
     flowItem.num++;
     if(flowItem.active && flowItem.num < flowItem.count) {
       includeItem.line = flowItem.line;

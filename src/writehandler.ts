@@ -14,8 +14,15 @@ export class WriteHandler {
   output: number[] = [];
   log: LogItem[] = [];
 
-  constructor(assembler: Assembler) {
+  outFile: string;
+  listFile?: string;
+  symbolFile?: string;
+
+  constructor(assembler: Assembler, outFile: string, listFile?: string, symbolFile?: string) {
     this.assembler = assembler;
+    this.outFile = outFile;
+    this.listFile = listFile;
+    this.symbolFile = symbolFile;
   }
 
   startPass(): void {
@@ -29,9 +36,9 @@ export class WriteHandler {
 
   writeFiles(): void {
     let data = new Uint8Array(this.output);
-    this.writeFile("testing/test.bin", data);
-    this.writeFile("testing/test.lst", this.generateListing());
-    this.writeFile("testing/test.sym", this.generateSymbolFile());
+    this.writeFile(this.outFile, data);
+    if(this.listFile) this.writeFile(this.listFile, this.generateListing());
+    if(this.symbolFile) this.writeFile(this.symbolFile, this.generateSymbolFile());
   }
 
   private writeFile(path: string, data: Uint8Array | string): void {
