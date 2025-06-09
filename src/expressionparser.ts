@@ -172,13 +172,13 @@ function parseNonOp(expr: string): [ExpressionNode, string] {
     return [newNode, expr.slice(1)];
   }
   // test for string constant
-  let stringTest = expr.match(/^"((?:[^\\]|\\[^u]|\\u\([\da-fA-F]+\))*)"/);
+  let stringTest = expr.match(/^"((?:[^\\"]|\\[^u]|\\u\([\da-fA-F]+\))*)"/);
   if(stringTest) {
     let newNode: ExpressionNode = {type: NodeType.VALUE, value: handleStringEscapes(stringTest[1]!)};
     return [newNode, expr.slice(stringTest[0].length)];
   }
   // check for character constant
-  let charTest = expr.match(/^'([^\\]|\\[^u]|\\u\([\da-fA-F]+\))'/);
+  let charTest = expr.match(/^'([^\\"]|\\[^u]|\\u\([\da-fA-F]+\))'/);
   if(charTest) {
     let newNode: ExpressionNode = {type: NodeType.CHAR, char: handleStringEscapes(charTest[1]!)};
     return [newNode, expr.slice(charTest[0].length)];
@@ -209,14 +209,14 @@ export function cleanExpression(expr: string): string {
   let last = "";
   while(true) {
     // check for string or character, escape commas
-    let stringTest = expr.match(/^"(?:[^\\]|\\[^u]|\\u\([\da-fA-F]+\))*"/);
+    let stringTest = expr.match(/^"(?:[^\\"]|\\[^u]|\\u\([\da-fA-F]+\))*"/);
     if(stringTest) {
       out += stringTest[0].replaceAll(",", "\\u(2c)");
       expr = expr.slice(stringTest[0].length);
       last = "\"";
       continue;
     }
-    let charTest = expr.match(/^'([^\\]|\\[^u]|\\u\([\da-fA-F]+\))'/);
+    let charTest = expr.match(/^'(?:[^\\"]|\\[^u]|\\u\([\da-fA-F]+\))'/);
     if(charTest) {
       out += charTest[0].replaceAll(",", "\\u(2c)");
       expr = expr.slice(charTest[0].length);

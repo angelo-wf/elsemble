@@ -17,7 +17,8 @@ export enum LineType {
 
 export type Line = {
   type: LineType,
-  label?: string
+  label?: string,
+  raw: string
 } & ({
   type: LineType.NONE
 } | {
@@ -41,6 +42,7 @@ export type Line = {
 
 // parse a line of assembly
 export function parseLine(line: string): Line {
+  let raw = line;
   // test for assignment
   let assignmentTest = line.match(/^\s*((?:[\w\.@]|:[\w\.@])+)\s*(:?=)/);
   if(assignmentTest) {
@@ -49,7 +51,7 @@ export function parseLine(line: string): Line {
     // parse expression for value and check that line ends after
     let [value, lineLeft] = parseExpression(line.slice(match.length));
     if(!checkLineEnd(lineLeft)) throw new ParserError("Trailing characters after expression");
-    return {type: LineType.ASSIGNMENT, label: checkLabel(assigned!), reassignment, value};
+    return {type: LineType.ASSIGNMENT, label: checkLabel(assigned!), reassignment, value, raw};
   }
   // check for and get label
   let label: string | undefined = undefined;
@@ -69,22 +71,22 @@ export function parseLine(line: string): Line {
         [args, argumentStr] = parseArgumentList(argumentStr);
         if(!checkLineEnd(argumentStr)) throw new ParserError("Trailing characters after expression");
       }
-      return {type: LineType.MACRO, label, macro: directive.slice(1), arguments: args};
+      return {type: LineType.MACRO, label, macro: directive.slice(1), arguments: args, raw};
     } else {
-      let [args, dir] = parseDirectiveLine(directive.slice(1), argumentStr);
-      return {type: LineType.DIRECTIVE, label, directive: dir, arguments: args};
+      let [args, dir] = parseDirectiveLine(directive.slice(1).toLowerCase(), argumentStr);
+      return {type: LineType.DIRECTIVE, label, directive: dir, arguments: args, raw};
     }
   }
   // check for opcode
   let opcodeTest = line.match(/^\s*(\w[\w\.]*)\s*/);
   if(opcodeTest) {
-    let opcode = opcodeTest[1]!;
+    let opcode = opcodeTest[1]!.toLowerCase();
     let argumentStr = cleanExpression(line.slice(opcodeTest[0].length));
-    return {type: LineType.OPCODE, opcode, argument: argumentStr};
+    return {type: LineType.OPCODE, opcode, argument: argumentStr, raw};
   }
   // check if it is empty
   if(checkLineEnd(line)) {
-    return {type: LineType.NONE, label};
+    return {type: LineType.NONE, label, raw};
   }
   throw new ParserError("Unparseable line");
 }
