@@ -3,6 +3,7 @@ import { Directive } from "./directives.js";
 import { ExpressionHandler, ExpressionResult } from "./expressionhandler.js";
 import { ExpressionNode } from "./expressionparser.js";
 import { Line, LineType } from "./lineparser.js";
+import { Architecture, parseArchitecture } from "./opcodes.js";
 import { ReadHandler } from "./readhandler.js";
 import { WriteHandler } from "./writehandler.js";
 
@@ -10,7 +11,8 @@ type IncludeItem = {
   path: string,
   line: number,
   offset: number,
-  isMacro: boolean
+  isMacro: boolean,
+  arch: Architecture
 };
 
 enum FlowType {
@@ -134,7 +136,7 @@ export class Assembler {
     this.pc = 0;
     this.fillByte = 0;
     // handle input file (as if include)
-    this.handleFile(this.arguments.inputFile);
+    this.handleFile(this.arguments.inputFile, Architecture.M6502); // TODO: handle default architecture
     // check that no items (if, macro, etc) were left open
     if(this.flowStack.length > 1) {
       this.logError(`Unclosed ${this.flowStack.at(-1)!.type === FlowType.IF ? ".if" : ".repeat"} statement`);
@@ -152,11 +154,11 @@ export class Assembler {
     this.passNum++;
   }
 
-  private handleFile(path: string): void {
+  private handleFile(path: string, arch: Architecture): void {
     if(this.includeStack.length > stackLimit) return this.logError("Include/macro stack limit reached");
     // parse, add include item, run, and pop item
-    let parsed = this.readHandler.readAssemblyFile(path);
-    this.includeStack.push({path, line: 1, offset: 1, isMacro: false});
+    let parsed = this.readHandler.readAssemblyFile(path, arch);
+    this.includeStack.push({path, line: 1, offset: 1, isMacro: false, arch});
     this.handleLines(parsed);
     this.includeStack.pop();
   }
@@ -172,8 +174,9 @@ export class Assembler {
     for(let i = 0; i < args.length; i++) {
       this.defineLabel(macro.args[i]!, argValues[i]!, false);
     }
-    // add include item and run macro
-    this.includeStack.push({path: macro.path, line: macro.line, offset: macro.line, isMacro: true});
+    // add include item and run macro, copy over architecture into macro
+    let arch = this.includeStack.at(-1)!.arch;
+    this.includeStack.push({path: macro.path, line: macro.line, offset: macro.line, isMacro: true, arch});
     this.handleLines(macro.lines);
     // check that no repeat was opened, then pop include item
     if(!this.blockStack.at(-1)!.startsWith("@m")) {
@@ -223,6 +226,8 @@ export class Assembler {
           break;
         case LineType.OPCODE:
           if(!active) break;
+          if(line.arch !== includeItem.arch) this.logError("Architecture mismatch between parsed and current");
+          // TODO: parse opcode
           break;
         case LineType.MACRO:
           if(!active) break;
@@ -423,6 +428,7 @@ export class Assembler {
       case Directive.SCOPE: if(active) this.dirScope(args[0] as string); break;
       case Directive.ENDSCOPE: if(active) this.dirEndScope(); break;
       case Directive.ASSERT: if(active) this.dirAssert(args[0] as ExpressionNode, args[1] as ExpressionNode); break;
+      case Directive.ARCH: this.dirArch(args[0] as string); break;
       default: throw (directive satisfies never);
     }
   }
@@ -510,7 +516,7 @@ export class Assembler {
   }
 
   private dirInclude(path: ExpressionNode): void {
-    this.handleFile(this.checkString(this.eval(path)));
+    this.handleFile(this.checkString(this.eval(path)), this.includeStack.at(-1)!.arch);
   }
 
   private dirOrg(loc: ExpressionNode): void {
@@ -611,5 +617,12 @@ export class Assembler {
   private dirAssert(test: ExpressionNode, msg: ExpressionNode): void {
     let res = this.eval(test) === 0;
     if(res) this.logError(`Assert: ${this.checkString(this.eval(msg))}`);
+  }
+
+  private dirArch(name: string): void {
+    if(this.flowStack.length > 1) this.logError("Cannot use .arch within .if or .repeat-statement");
+    if(this.blockStack.length > 0) this.logError("Cannot use .arch within macro");
+    // must be valid, as parsing would have failed otherwise
+    this.includeStack.at(-1)!.arch = parseArchitecture(name);
   }
 }

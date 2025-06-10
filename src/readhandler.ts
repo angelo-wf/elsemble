@@ -1,6 +1,8 @@
 import fs from "node:fs";
-import { Line, parseLine, ParserError } from "./lineparser.js";
+import { Line, LineType, parseLine, ParserError } from "./lineparser.js";
 import { Assembler } from "./assembler.js";
+import { Architecture, parseArchitecture } from "./opcodes.js";
+import { Directive } from "./directives.js";
 
 export class ReadHandler {
 
@@ -31,7 +33,7 @@ export class ReadHandler {
   }
 
   // read and parse assembly file (with cache)
-  readAssemblyFile(path: string): Line[] {
+  readAssemblyFile(path: string, arch: Architecture): Line[] {
     if(this.parserCache.has(path)) {
       return this.parserCache.get(path)!;
     }
@@ -44,18 +46,22 @@ export class ReadHandler {
       return [];
     }
     // parse the data
-    let parsed = this.parseAssemblyFile(data, path);
+    let parsed = this.parseAssemblyFile(data, path, arch);
     this.parserCache.set(path, parsed);
     return parsed;
   }
 
-  private parseAssemblyFile(content: string, path: string): Line[] {
-    // TODO: handle arch directive, also needs arg as input
+  private parseAssemblyFile(content: string, path: string, arch: Architecture): Line[] {
     let output: Line[] = [];
     let lineNum = 1;
     try {
       for(let line of content.split("\n")) {
-        output.push(parseLine(line));
+        let parsed = parseLine(line, arch);
+        output.push(parsed);
+        // handle arch, has to be done during parsing as opcode parsing depends on it
+        if(parsed.type === LineType.DIRECTIVE && parsed.directive === Directive.ARCH) {
+          arch = parseArchitecture(parsed.arguments[0] as string);
+        }
         lineNum++;
       }
       return output;

@@ -1,5 +1,6 @@
 import { Directive, parseDirectiveLine } from "./directives.js";
 import { cleanExpression, consumeSpaces, ExpressionNode, parseExpression } from "./expressionparser.js";
+import { Architecture, parseOpcode } from "./opcodes.js";
 
 export class ParserError extends Error {
   constructor(message: string, options?: ErrorOptions) {
@@ -29,7 +30,9 @@ export type Line = {
 } | {
   type: LineType.OPCODE,
   opcode: string,
-  argument: string
+  modeNum: number,
+  arguments: ExpressionNode[],
+  arch: Architecture
 } | {
   type: LineType.DIRECTIVE,
   directive: Directive,
@@ -41,7 +44,7 @@ export type Line = {
 });
 
 // parse a line of assembly
-export function parseLine(line: string): Line {
+export function parseLine(line: string, arch: Architecture): Line {
   let raw = line;
   // test for assignment
   let assignmentTest = line.match(/^\s*((?:[\w\.@]|:[\w\.@])+)\s*(:?=)/);
@@ -82,7 +85,8 @@ export function parseLine(line: string): Line {
   if(opcodeTest) {
     let opcode = opcodeTest[1]!.toLowerCase();
     let argumentStr = cleanExpression(line.slice(opcodeTest[0].length));
-    return {type: LineType.OPCODE, opcode, argument: argumentStr, raw};
+    let [args, modeNum] = parseOpcode(arch, opcode, argumentStr);
+    return {type: LineType.OPCODE, opcode, arguments: args, modeNum, arch, raw};
   }
   // check if it is empty
   if(checkLineEnd(line)) {
