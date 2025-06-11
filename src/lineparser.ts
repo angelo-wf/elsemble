@@ -86,7 +86,7 @@ export function parseLine(line: string, arch: Architecture): Line {
     let opcode = opcodeTest[1]!.toLowerCase();
     let argumentStr = cleanExpression(line.slice(opcodeTest[0].length));
     let [args, modeNum] = parseOpcode(arch, opcode, argumentStr);
-    return {type: LineType.OPCODE, opcode, arguments: args, modeNum, arch, raw};
+    return {type: LineType.OPCODE, label, opcode, arguments: args, modeNum, arch, raw};
   }
   // check if it is empty
   if(checkLineEnd(line)) {

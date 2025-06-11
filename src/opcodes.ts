@@ -1,3 +1,4 @@
+import { createM6502Map } from "./architectures/m6502.js";
 import { ExpressionNode, parseExpression } from "./expressionparser.js";
 import { ParserError } from "./lineparser.js";
 
@@ -7,7 +8,11 @@ export enum Architecture {
 };
 
 export enum AdrMode {
-  IMM8
+  IMM8,
+  DP,
+  DPABS,
+  ABS,
+  REL8
 };
 
 export enum SpecialOp {
@@ -22,17 +27,15 @@ export type OpcodeInfo = {
   spc?: SpecialOp
 };
 
+export type OpcodeMap = {[p: string]: OpcodeInfo[]};
+
 type ArchInfo<K> = {
   arch: K,
-  opMap: {[p: string]: OpcodeInfo[]}
+  opMap: OpcodeMap
 };
 
-// TODO: some temp content used for testing
 const opcodes: {[key in Architecture]: ArchInfo<key>} = {
-  [Architecture.M6502]: {arch: Architecture.M6502, opMap: {"lda": [
-    {regex: /^#(.+)$/i, adrs: [AdrMode.IMM8], vals: [0xa9], argMap: [-1, 1]},
-    {regex: /^(.+),#(.+)$/i, adrs: [AdrMode.IMM8, AdrMode.IMM8], vals: [0xa5], argMap: [-1, 2, 1]}
-  ]}},
+  [Architecture.M6502]: {arch: Architecture.M6502, opMap: createM6502Map()},
   [Architecture.W65816]: {arch: Architecture.W65816, opMap: {}}
 };
 

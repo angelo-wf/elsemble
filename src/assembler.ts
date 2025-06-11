@@ -3,6 +3,7 @@ import { Directive } from "./directives.js";
 import { ExpressionHandler, ExpressionResult } from "./expressionhandler.js";
 import { ExpressionNode } from "./expressionparser.js";
 import { Line, LineType } from "./lineparser.js";
+import { OpcodeHandler } from "./opcodehandler.js";
 import { Architecture, parseArchitecture } from "./opcodes.js";
 import { ReadHandler } from "./readhandler.js";
 import { WriteHandler } from "./writehandler.js";
@@ -60,6 +61,7 @@ export class Assembler {
 
   private readHandler = new ReadHandler(this);
   private expressionHandler = new ExpressionHandler(this);
+  private opcodeHandler = new OpcodeHandler(this);
   private writeHandler: WriteHandler;
 
   private arguments: Arguments;
@@ -117,6 +119,7 @@ export class Assembler {
 
   private doPass(): void {
     this.writeHandler.startPass();
+    this.opcodeHandler.startPass();
     // reset stacks
     this.includeStack = [];
     this.flowStack = [{type: FlowType.MAIN, active: true, taken: true}];
@@ -227,7 +230,7 @@ export class Assembler {
         case LineType.OPCODE:
           if(!active) break;
           if(line.arch !== includeItem.arch) this.logError("Architecture mismatch between parsed and current");
-          // TODO: parse opcode
+          this.pc += this.opcodeHandler.emitOpcode(line.arch, line.opcode, line.modeNum, line.arguments);
           break;
         case LineType.MACRO:
           if(!active) break;
@@ -347,10 +350,6 @@ export class Assembler {
     return name.startsWith(":") ? name.slice(1) : name;
   }
 
-  private eval(node: ExpressionNode): ExpressionResult {
-    return this.expressionHandler.evaluateExpression(node);
-  }
-
   // get all non-redefinable, non-block labels and their values
   getSymbols(): [string, string | number][] {
     let out: [string, string | number][] = [];
@@ -398,6 +397,31 @@ export class Assembler {
     return num;
   }
 
+  // evaluate expression
+  eval(node: ExpressionNode): ExpressionResult {
+    return this.expressionHandler.evaluateExpression(node);
+  }
+
+  // get current architecture
+  getArch(): Architecture {
+    return this.includeStack.at(-1)!.arch;
+  }
+
+  // write byte
+  writeByte(byte: number) {
+    this.writeHandler.writeBytes(byte);
+  }
+
+  // write word
+  writeWord(word: number) {
+    this.writeHandler.writeWords(word);
+  }
+
+  // write long
+  writeLong(long: number) {
+    this.writeHandler.writeLongs(long);
+  }
+
   // directive handling / helpers
 
   private handleDirective(directive: Directive, args: (ExpressionNode | string)[]): void {
@@ -429,6 +453,10 @@ export class Assembler {
       case Directive.ENDSCOPE: if(active) this.dirEndScope(); break;
       case Directive.ASSERT: if(active) this.dirAssert(args[0] as ExpressionNode, args[1] as ExpressionNode); break;
       case Directive.ARCH: this.dirArch(args[0] as string); break;
+      case Directive.DIRPAGE: if(active) this.opcodeHandler.dirDirPage(args[0] as ExpressionNode); break;
+      case Directive.BANK: if(active) this.opcodeHandler.dirBank(args[0] as ExpressionNode); break;
+      case Directive.ASIZE: if(active) this.opcodeHandler.dirXsize(args[0] as ExpressionNode, false); break;
+      case Directive.ISIZE: if(active) this.opcodeHandler.dirXsize(args[0] as ExpressionNode, true); break;
       default: throw (directive satisfies never);
     }
   }

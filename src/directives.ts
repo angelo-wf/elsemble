@@ -26,7 +26,11 @@ export enum Directive {
   SCOPE = "scope",
   ENDSCOPE = "endscope",
   ASSERT = "assert",
-  ARCH = "arch"
+  ARCH = "arch",
+  DIRPAGE = "dirpage",
+  BANK = "bank",
+  ASIZE = "asize",
+  ISIZE = "isize"
 };
 
 enum ArgumentType {
@@ -67,7 +71,11 @@ const directiveArgs: {[key in Directive]: DirectiveInfo<key>} = {
   [Directive.SCOPE]: {dir: Directive.SCOPE, minCount: 1, types: [ArgumentType.NAME]},
   [Directive.ENDSCOPE]: {dir: Directive.ENDSCOPE, minCount: 0, types: []},
   [Directive.ASSERT]: {dir: Directive.ASSERT, minCount: 2, types: [ArgumentType.EXPR, ArgumentType.EXPR]},
-  [Directive.ARCH]: {dir: Directive.ARCH, minCount: 1, types: [ArgumentType.NAME]}
+  [Directive.ARCH]: {dir: Directive.ARCH, minCount: 1, types: [ArgumentType.NAME]},
+  [Directive.DIRPAGE]: {dir: Directive.DIRPAGE, minCount: 1, types: [ArgumentType.EXPR]},
+  [Directive.BANK]: {dir: Directive.BANK, minCount: 1, types: [ArgumentType.EXPR]},
+  [Directive.ASIZE]: {dir: Directive.ASIZE, minCount: 1, types: [ArgumentType.EXPR]},
+  [Directive.ISIZE]: {dir: Directive.ISIZE, minCount: 1, types: [ArgumentType.EXPR]}
 };
 
 // parse a directive line, giving the directive and list of arguments (type depends on specifief type for directive)

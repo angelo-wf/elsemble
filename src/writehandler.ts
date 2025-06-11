@@ -9,14 +9,14 @@ type LogItem = {
 
 export class WriteHandler {
 
-  assembler: Assembler;
+  private assembler: Assembler;
 
-  output: number[] = [];
-  log: LogItem[] = [];
+  private output: number[] = [];
+  private log: LogItem[] = [];
 
-  outFile: string;
-  listFile?: string;
-  symbolFile?: string;
+  private outFile: string;
+  private listFile?: string;
+  private symbolFile?: string;
 
   constructor(assembler: Assembler, outFile: string, listFile?: string, symbolFile?: string) {
     this.assembler = assembler;
@@ -25,15 +25,18 @@ export class WriteHandler {
     this.symbolFile = symbolFile;
   }
 
+  // indicate pass start, reset written content
   startPass(): void {
     this.output = [];
     this.log = [];
   }
 
+  // indicate start of a line, for listing
   startLine(pc: number, raw: string): void {
     this.log.push({pc, pos: this.output.length, raw});
   }
 
+  // write generated files
   writeFiles(): void {
     let data = new Uint8Array(this.output);
     this.writeFile(this.outFile, data);
@@ -53,18 +56,21 @@ export class WriteHandler {
     }
   }
 
+  // write a byte count times (assumed to be in range)
   writeByteTimes(byte: number, count: number): void {
     for(let i = 0; i < count; i++) {
       this.output.push(byte & 0xff);
     }
   }
 
+  // write bytes (assumed to be in range)
   writeBytes(...bytes: number[]): void {
     for(let byte of bytes) {
       this.output.push(byte & 0xff);
     }
   }
 
+  // write words (assumed to be in range)
   writeWords(...words: number[]): void {
     for(let word of words) {
       this.output.push(word & 0xff);
@@ -72,6 +78,7 @@ export class WriteHandler {
     }
   }
 
+  // write longs (assumed to be in range)
   writeLongs(...longs: number[]): void {
     for(let long of longs) {
       this.output.push(long & 0xff);
