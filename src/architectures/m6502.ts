@@ -1,4 +1,4 @@
-import { AdrMode, OpcodeInfo, OpcodeMap } from "../opcodes.js";
+import { addItem, AdrMode, OpcodeMap } from "../opcodes.js";
 
 const regImpl = /^$/i;
 const regAccu = /^a?$/i;
@@ -181,11 +181,4 @@ function addAbsol(map: OpcodeMap, opcode: string, regex: RegExp, val: number): v
 
 function addRelat(map: OpcodeMap, opcode: string, regex: RegExp, val: number): void {
   addItem(map, opcode, {regex, adrs: [AdrMode.REL8], vals: [val], argMap: [-1, 1]});
-}
-
-function addItem(map: OpcodeMap, name: string, item: OpcodeInfo): void {
-  if(map[name] === undefined) {
-    map[name] = [];
-  }
-  map[name]!.push(item);
 }

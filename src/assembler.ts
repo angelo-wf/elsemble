@@ -457,6 +457,8 @@ export class Assembler {
       case Directive.BANK: if(active) this.opcodeHandler.dirBank(args[0] as ExpressionNode); break;
       case Directive.ASIZE: if(active) this.opcodeHandler.dirXsize(args[0] as ExpressionNode, false); break;
       case Directive.ISIZE: if(active) this.opcodeHandler.dirXsize(args[0] as ExpressionNode, true); break;
+      case Directive.MIRROR: if(active) this.opcodeHandler.dirMirror(args[0] as ExpressionNode, args[1] as ExpressionNode, args[2] as ExpressionNode, args[3] as ExpressionNode, args[4] as ExpressionNode | undefined); break;
+      case Directive.CLRMIRROR: if(active) this.opcodeHandler.dirClrMirror(); break;
       default: throw (directive satisfies never);
     }
   }

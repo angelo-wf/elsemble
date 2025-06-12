@@ -30,7 +30,9 @@ export enum Directive {
   DIRPAGE = "dirpage",
   BANK = "bank",
   ASIZE = "asize",
-  ISIZE = "isize"
+  ISIZE = "isize",
+  MIRROR = "mirror",
+  CLRMIRROR = "clrmirror"
 };
 
 enum ArgumentType {
@@ -75,7 +77,9 @@ const directiveArgs: {[key in Directive]: DirectiveInfo<key>} = {
   [Directive.DIRPAGE]: {dir: Directive.DIRPAGE, minCount: 1, types: [ArgumentType.EXPR]},
   [Directive.BANK]: {dir: Directive.BANK, minCount: 1, types: [ArgumentType.EXPR]},
   [Directive.ASIZE]: {dir: Directive.ASIZE, minCount: 1, types: [ArgumentType.EXPR]},
-  [Directive.ISIZE]: {dir: Directive.ISIZE, minCount: 1, types: [ArgumentType.EXPR]}
+  [Directive.ISIZE]: {dir: Directive.ISIZE, minCount: 1, types: [ArgumentType.EXPR]},
+  [Directive.MIRROR]: {dir: Directive.MIRROR, minCount: 4, types: [ArgumentType.EXPR, ArgumentType.EXPR, ArgumentType.EXPR, ArgumentType.EXPR, ArgumentType.EXPR]},
+  [Directive.CLRMIRROR]: {dir: Directive.CLRMIRROR, minCount: 0, types: []}
 };
 
 // parse a directive line, giving the directive and list of arguments (type depends on specifief type for directive)

@@ -1,7 +1,7 @@
 import { Assembler } from "./assembler.js";
 import { ExpressionResult } from "./expressionhandler.js";
 import { ExpressionNode } from "./expressionparser.js";
-import { AdrMode, Architecture, getOpcodeInfo } from "./opcodes.js";
+import { AdrMode, Architecture, getOpcodeInfo, SpecialOp } from "./opcodes.js";
 
 type ArchConfig = {
   dirPage: number,
@@ -17,7 +17,8 @@ export class OpcodeHandler {
 
   private configs: {[key in Architecture]: ArchConfig} = {
     [Architecture.M6502]: {dirPage: 0, bank: 0, aSize: 8, iSize: 8, memMap: []},
-    [Architecture.W65816]: {dirPage: 0, bank: 0, aSize: 8, iSize: 8, memMap: []}
+    [Architecture.W65816]: {dirPage: 0, bank: 0, aSize: 8, iSize: 8, memMap: []},
+    [Architecture.SPC700]: {dirPage: 0, bank: 0, aSize: 8, iSize: 8, memMap: []}
   };
 
   constructor(assembler: Assembler) {
@@ -45,7 +46,14 @@ export class OpcodeHandler {
       let adr = opInfo.adrs[i]!;
       let val = this.assembler.eval(args[i]!);
       let [resVal, size] = this.handleOpArg(adr, val);
-      if(adr === AdrMode.DPABS) byteNum = size - 1;
+      // handle opcode byte selection based on size
+      if(adr === AdrMode.DPABS || adr === AdrMode.DPABSLONG) {
+        byteNum = size - 1;
+      } else if(adr === AdrMode.ABSKLONG) {
+        byteNum = size - 2;
+      } else if(adr === AdrMode.IMM3PO || adr === AdrMode.IMM4PO) {
+        byteNum = resVal;
+      }
       vals.push([resVal, size]);
     }
     // emit bytes
@@ -69,10 +77,16 @@ export class OpcodeHandler {
         bytes += size;
       }
     }
+    if(opInfo.spc === SpecialOp.ABSBIT) {
+      // special case for spc700 abs.bit
+      this.assembler.writeWord(vals[0]![0] | (vals[1]![0] << 13));
+      bytes += 2;
+    }
     return bytes;
   }
 
-  // config directives - TODO: only allow for archs where it makes sense
+  // config directives
+  // TODO: only allow for archs where it makes sense
 
   dirDirPage(page: ExpressionNode): void {
     let pageVal = this.assembler.checkRange(this.assembler.eval(page), false, 16);
@@ -94,34 +108,186 @@ export class OpcodeHandler {
     if(forI) this.configs[this.assembler.getArch()].iSize = val;
   }
 
+  dirMirror(src: ExpressionNode, start: ExpressionNode, end: ExpressionNode, dstStart: ExpressionNode, dstEnd?: ExpressionNode): void {
+    // TODO: check for end < start situations, better arg names
+    let bank = this.assembler.checkRange(this.assembler.eval(src), false, 8);
+    let min = this.assembler.checkRange(this.assembler.eval(start), false, 16);
+    let max = this.assembler.checkRange(this.assembler.eval(end), false, 16);
+    let dstStartVal = this.assembler.checkRange(this.assembler.eval(dstStart), false, 8);
+    let dstEndVal = dstEnd ? this.assembler.checkRange(this.assembler.eval(dstEnd), false, 8) : dstStartVal;
+    for(let i = dstStartVal; i <= dstEndVal; i++) {
+      this.configs[this.assembler.getArch()].memMap[i] = {min, max, bank};
+    }
+  }
+
+  dirClrMirror(): void {
+    for(let i = 0; i <= 255; i++) {
+      this.configs[this.assembler.getArch()].memMap[i] = undefined;
+    }
+  }
+
   // opcode argument / address handling
 
+  // TODO: handle architecture better (pass as arg from emitOpcode?)
   private handleOpArg(mode: AdrMode, val: ExpressionResult): [number, number] {
     switch(mode) {
       case AdrMode.IMM8: {
         return [this.assembler.checkRange(val, true, 8), 1];
       }
-      case AdrMode.DP: {
+      case AdrMode.IMM8P: {
         return [this.assembler.checkRange(val, false, 8), 1];
       }
-      case AdrMode.DPABS: {
-        let adr = this.assembler.checkRange(val, false, 16);
-        return [adr, adr < 0x100 ? 1 : 2];
+      case AdrMode.IMM16: {
+        return [this.assembler.checkRange(val, true, 16), 2];
       }
-      case AdrMode.ABS: {
+      case AdrMode.IMM16P: {
         return [this.assembler.checkRange(val, false, 16), 2];
       }
-      case AdrMode.REL8: {
-        let adr = this.assembler.checkRange(val, false, 16);
-        let diff = adr - (this.assembler.getPc() + 2);
-        diff = ((diff & 0xffff) << 16) >> 16;
-        if(diff < -128 || diff > 127) {
-          this.assembler.logError("Branch target out of range");
-          diff = 0;
+
+      case AdrMode.IMM816A: {
+        let size = this.configs[this.assembler.getArch()].aSize;
+        return [this.assembler.checkRange(val, true, size), size / 8];
+      }
+      case AdrMode.IMM816I: {
+        let size = this.configs[this.assembler.getArch()].iSize;
+        return [this.assembler.checkRange(val, true, size), size / 8];
+      }
+
+      case AdrMode.DP: {
+        let adr = this.assembler.checkRange(val, false, 24);
+        let dpRes = this.checkDp(adr);
+        if(dpRes !== undefined) return [dpRes, 1];
+        this.assembler.logError("Address not reachable");
+        return [0, 1];
+      }
+      case AdrMode.DPABS: {
+        let adr = this.assembler.checkRange(val, false, 24);
+        let dpRes = this.checkDp(adr);
+        if(dpRes !== undefined) return [dpRes, 1];
+        let absRes = this.checkAbs(adr, this.configs[this.assembler.getArch()].bank);
+        if(absRes !== undefined) return [absRes, 2];
+        this.assembler.logError("Address not reachable");
+        return [0, 2];
+      }
+      case AdrMode.ABS: {
+        let adr = this.assembler.checkRange(val, false, 24);
+        let absRes = this.checkAbs(adr, this.configs[this.assembler.getArch()].bank);
+        if(absRes !== undefined) return [absRes, 2];
+        this.assembler.logError("Address not reachable");
+        return [0, 2];
+      }
+      case AdrMode.DPABSLONG: {
+        let adr = this.assembler.checkRange(val, false, 24);
+        let dpRes = this.checkDp(adr);
+        if(dpRes !== undefined) return [dpRes, 1];
+        let absRes = this.checkAbs(adr, this.configs[this.assembler.getArch()].bank);
+        if(absRes !== undefined) return [absRes, 2];
+        return [adr, 3];
+      }
+      case AdrMode.LONG: {
+        return [this.assembler.checkRange(val, false, 24), 3];
+      }
+
+      case AdrMode.ABS0: {
+        let adr = this.assembler.checkRange(val, false, 24);
+        let absRes = this.checkAbs(adr, 0);
+        if(absRes !== undefined) return [absRes, 2];
+        this.assembler.logError("Address not reachable");
+        return [0, 2];
+      }
+      case AdrMode.ABSK: {
+        let adr = this.assembler.checkRange(val, false, 24);
+        let absRes = this.checkAbs(adr, this.assembler.getPc() >> 16);
+        if(absRes !== undefined) return [absRes, 2];
+        this.assembler.logError("Address not reachable");
+        return [0, 2];
+      }
+      case AdrMode.ABSKLONG: {
+        let adr = this.assembler.checkRange(val, false, 24);
+        let absRes = this.checkAbs(adr, this.assembler.getPc() >> 16);
+        if(absRes !== undefined) return [absRes, 2];
+        return [adr, 3];
+      }
+
+      case AdrMode.REL8: case AdrMode.REL8A: {
+        let adr = this.assembler.checkRange(val, false, 24);
+        let absRes = this.checkAbs(adr, this.assembler.getPc() >> 16);
+        if(absRes !== undefined) {
+          let diff = adr - (this.assembler.getPc() + (mode === AdrMode.REL8A ? 3 : 2));
+          // clip to signed 16 bit, allow wrapping within bank both ways
+          diff = ((diff & 0xffff) << 16) >> 16;
+          if(diff < -128 || diff > 127) {
+            this.assembler.logError("Branch target out of range");
+            diff = 0;
+          }
+          return [diff & 0xff, 1];
         }
-        return [diff & 0xff, 1];
+        this.assembler.logError("Address not reachable");
+        return [0, 1];
+      }
+      case AdrMode.REL16: {
+        let adr = this.assembler.checkRange(val, false, 24);
+        let absRes = this.checkAbs(adr, this.assembler.getPc() >> 16);
+        if(absRes !== undefined) {
+          let diff = adr - (this.assembler.getPc() + 3);
+          // clip to signed 16 bit, allow wrapping within bank both ways
+          diff = ((diff & 0xffff) << 16) >> 16;
+          return [diff & 0xffff, 2];
+        }
+        this.assembler.logError("Address not reachable");
+        return [0, 2];
+      }
+
+      case AdrMode.IMM3PO: case AdrMode.IMM3P: {
+        return [this.assembler.checkRange(val, false, 3), 0];
+      }
+      case AdrMode.IMM4PO: {
+        return [this.assembler.checkRange(val, false, 4), 0];
+      }
+      case AdrMode.ABS13: {
+        let adr = this.assembler.checkRange(val, false, 24);
+        let absRes = this.checkAbs(adr, this.configs[this.assembler.getArch()].bank);
+        if(absRes !== undefined) {
+          if(absRes >= 0x2000) {
+            this.assembler.logError("Address out of range");
+            absRes &= 0x1fff;
+          }
+          return [absRes, 2];
+        }
+        this.assembler.logError("Address not reachable");
+        return [0, 2];
       }
       default: throw (mode satisfies never);
     }
+  }
+
+  private checkDp(adr: number): number | undefined {
+    // check if it is in or mirrored in bank 0
+    if(this.hasMirror(adr >> 16, 0, adr & 0xffff)) {
+      adr &= 0xffff;
+      // test if address if within direct page range, allowing wrapping within bank
+      let val = (adr - this.configs[this.assembler.getArch()].dirPage) & 0xffff;
+      if(val < 0x100) return val;
+    }
+    return undefined;
+  }
+
+  private checkAbs(adr: number, bank: number): number | undefined {
+    // check if it is in or mirrored in given bank
+    if(this.hasMirror(adr >> 16, bank & 0xff, adr & 0xffff)) {
+      return adr & 0xffff;
+    }
+    return undefined;
+  }
+
+  private hasMirror(bank1: number, bank2: number, adr: number): boolean {
+    if(bank1 === bank2) return true;
+    // check if bank1 has mirror for bank2
+    let test1 = this.configs[this.assembler.getArch()].memMap[bank1];
+    if(test1 && bank2 === test1.bank && adr >= test1.min && adr <= test1.max) return true;
+    // check if bank2 had mirror for bank1
+    let test2 = this.configs[this.assembler.getArch()].memMap[bank2];
+    if(test2 && bank1 === test2.bank && adr >= test2.min && adr <= test2.max) return true;
+    return false;
   }
 }
