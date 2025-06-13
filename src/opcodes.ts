@@ -24,7 +24,6 @@ export enum AdrMode {
   LONG,
   ABS0,
   ABSK,
-  ABSKLONG,
   REL8,
   REL8A,
   REL16,
