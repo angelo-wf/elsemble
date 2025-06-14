@@ -45,8 +45,8 @@ export class ExpressionHandler {
     let rightVal = this.evaluateExpression(right);
     switch(operator) {
       case BinaryOperator.MULTIPLY: return this.calcNumeric(leftVal, rightVal, (a, b) => a * b);
-      case BinaryOperator.DIVIDE: return this.calcNumeric(leftVal, rightVal, (a, b) => this.handleDivision(a, b));
-      case BinaryOperator.MODULUS: return this.calcNumeric(leftVal, rightVal, (a, b) => a % b);
+      case BinaryOperator.DIVIDE: return this.calcNumeric(leftVal, rightVal, (a, b) => this.handleDivMod(a, b, false));
+      case BinaryOperator.MODULUS: return this.calcNumeric(leftVal, rightVal, (a, b) => this.handleDivMod(a, b, true));
       case BinaryOperator.ADD: return this.handleAddition(leftVal, rightVal);
       case BinaryOperator.SUBTRACT: return this.calcNumeric(leftVal, rightVal, (a, b) => a - b);
       case BinaryOperator.LSHIFT: return this.calcNumeric(leftVal, rightVal, (a, b) => a << b);
@@ -78,11 +78,11 @@ export class ExpressionHandler {
     return 0;
   }
 
-  private handleDivision(left: number, right: number): number {
+  private handleDivMod(left: number, right: number, mod: boolean): number {
     if(right === 0) {
-      this.assembler.logError("Division by 0");
+      this.assembler.logError("Division or mod by 0");
       return 0;
     }
-    return Math.trunc(left / right);
+    return mod ? left % right : Math.trunc(left / right);
   }
 }

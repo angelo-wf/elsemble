@@ -33,7 +33,7 @@ export class ReadHandler {
   }
 
   // read and parse assembly file (with cache)
-  readAssemblyFile(path: string, arch: Architecture): Line[] {
+  readAssemblyFile(path: string, arch?: Architecture): Line[] {
     if(this.parserCache.has(path)) {
       return this.parserCache.get(path)!;
     }
@@ -51,7 +51,7 @@ export class ReadHandler {
     return parsed;
   }
 
-  private parseAssemblyFile(content: string, path: string, arch: Architecture): Line[] {
+  private parseAssemblyFile(content: string, path: string, arch?: Architecture): Line[] {
     let output: Line[] = [];
     let lineNum = 1;
     try {

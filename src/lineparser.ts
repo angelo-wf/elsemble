@@ -44,7 +44,7 @@ export type Line = {
 });
 
 // parse a line of assembly
-export function parseLine(line: string, arch: Architecture): Line {
+export function parseLine(line: string, arch?: Architecture): Line {
   let raw = line;
   // test for assignment
   let assignmentTest = line.match(/^\s*((?:[\w\.@]|:[\w\.@])+)\s*(:?=)/);
@@ -85,6 +85,7 @@ export function parseLine(line: string, arch: Architecture): Line {
   if(opcodeTest) {
     let opcode = opcodeTest[1]!.toLowerCase();
     let argumentStr = cleanExpression(line.slice(opcodeTest[0].length));
+    if(!arch) throw new ParserError("Opcode encuntered without architecture set");
     let [args, modeNum] = parseOpcode(arch, opcode, argumentStr);
     return {type: LineType.OPCODE, label, opcode, arguments: args, modeNum, arch, raw};
   }

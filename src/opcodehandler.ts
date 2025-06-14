@@ -84,29 +84,37 @@ export class OpcodeHandler {
   }
 
   // config directives
-  // TODO: only allow for archs where it makes sense
 
-  dirDirPage(page: ExpressionNode): void {
+  dirDirPage(page: ExpressionNode, arch?: Architecture): void {
+    if(arch !== Architecture.W65816 && arch !== Architecture.SPC700) {
+      return this.assembler.logError("Cannot use .dirpage outside of architectures w65816 or spc700");
+    }
     let pageVal = this.assembler.checkRange(this.assembler.eval(page), false, 16);
-    this.configs[this.assembler.getArch()].dirPage = pageVal;
+    if(arch === Architecture.SPC700 && (pageVal !== 0 && pageVal !== 0x100)) {
+      return this.assembler.logError("spc700 requires direct page to be at 0 or 256");
+    }
+    this.configs[arch].dirPage = pageVal;
   }
 
-  dirBank(bank: ExpressionNode): void {
+  dirBank(bank: ExpressionNode, arch?: Architecture): void {
+    if(arch !== Architecture.W65816) return this.assembler.logError("Cannot use .bank outside architecture w65816");
     let bankVal = this.assembler.checkRange(this.assembler.eval(bank), false, 8);
-    this.configs[this.assembler.getArch()].bank = bankVal;
+    this.configs[arch].bank = bankVal;
   }
 
-  dirXsize(size: ExpressionNode, forI: boolean): void {
+  dirXsize(size: ExpressionNode, forI: boolean, arch?: Architecture): void {
+    if(arch !== Architecture.W65816) return this.assembler.logError(`Cannot use ${forI ? ".isize" : ".asize"} outside architecture w65816`);
     let val = this.assembler.checkNumber(this.assembler.eval(size));
     if(val !== 8 && val !== 16) {
       this.assembler.logError("Expected 8 or 16");
       val = 8;
     }
-    if(!forI) this.configs[this.assembler.getArch()].aSize = val;
-    if(forI) this.configs[this.assembler.getArch()].iSize = val;
+    if(!forI) this.configs[arch].aSize = val;
+    if(forI) this.configs[arch].iSize = val;
   }
 
-  dirMirror(src: ExpressionNode, start: ExpressionNode, end: ExpressionNode, dstStart: ExpressionNode, dstEnd?: ExpressionNode): void {
+  dirMirror(src: ExpressionNode, start: ExpressionNode, end: ExpressionNode, dstStart: ExpressionNode, dstEnd?: ExpressionNode, arch?: Architecture): void {
+    if(arch !== Architecture.W65816) return this.assembler.logError("Cannot use .mirror outside architecture w65816");
     let bank = this.assembler.checkRange(this.assembler.eval(src), false, 8);
     let min = this.assembler.checkRange(this.assembler.eval(start), false, 16);
     let max = this.assembler.checkRange(this.assembler.eval(end), false, 16);
@@ -115,13 +123,14 @@ export class OpcodeHandler {
     let dstEndVal = dstEnd ? this.assembler.checkRange(this.assembler.eval(dstEnd), false, 8) : dstStartVal;
     if(dstEndVal < dstStartVal) return this.assembler.logError("End bank below start bank");
     for(let i = dstStartVal; i <= dstEndVal; i++) {
-      this.configs[this.assembler.getArch()].memMap[i] = {min, max, bank};
+      this.configs[arch].memMap[i] = {min, max, bank};
     }
   }
 
-  dirClrMirror(): void {
+  dirClrMirror(arch?: Architecture): void {
+    if(arch !== Architecture.W65816) return this.assembler.logError("Cannot use .clrmirror outside architecture w65816");
     for(let i = 0; i <= 255; i++) {
-      this.configs[this.assembler.getArch()].memMap[i] = undefined;
+      this.configs[arch].memMap[i] = undefined;
     }
   }
 
@@ -259,7 +268,7 @@ export class OpcodeHandler {
     if(this.hasMirror(arch, adr >> 16, 0, adr & 0xffff)) {
       adr &= 0xffff;
       // test if address if within direct page range, allowing wrapping within bank
-      let val = (adr - this.configs[this.assembler.getArch()].dirPage) & 0xffff;
+      let val = (adr - this.configs[arch].dirPage) & 0xffff;
       if(val < 0x100) return val;
     }
     return undefined;

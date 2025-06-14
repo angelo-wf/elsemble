@@ -1,7 +1,7 @@
 import { Arguments } from "./arguments.js";
 import { Directive } from "./directives.js";
 import { ExpressionHandler, ExpressionResult } from "./expressionhandler.js";
-import { ExpressionNode } from "./expressionparser.js";
+import { ExpressionNode, NodeType } from "./expressionparser.js";
 import { Line, LineType } from "./lineparser.js";
 import { OpcodeHandler } from "./opcodehandler.js";
 import { Architecture, parseArchitecture } from "./opcodes.js";
@@ -13,7 +13,7 @@ type IncludeItem = {
   line: number,
   offset: number,
   isMacro: boolean,
-  arch: Architecture
+  arch?: Architecture
 };
 
 enum FlowType {
@@ -78,7 +78,7 @@ export class Assembler {
   private macros: Map<string, Macro> = new Map();
   private definingMacro?: string;
 
-  private labelsChanged = false;
+  private changedLabel?: string;
   private passError?: string;
   private passNum = 0;
 
@@ -95,11 +95,11 @@ export class Assembler {
     while(this.passNum < (this.arguments.passLimit ?? defaultPassLimit)) {
       if(this.arguments.verbose) console.log(`Pass ${this.passNum + 1}...`);
       this.doPass();
-      if(!this.labelsChanged) break;
+      if(!this.changedLabel) break;
     }
-    if(this.labelsChanged) {
+    if(this.changedLabel) {
       // force this error above other errors
-      this.passError = "Pass limit reached";
+      this.passError = `Pass limit reached, label '${this.getLabelName(this.changedLabel)}' kept changing`;
     }
     if(this.passError) {
       // error in last pass
@@ -133,13 +133,13 @@ export class Assembler {
     this.macros.clear();
     this.definingMacro = undefined;
     // reset pass state
-    this.labelsChanged = false;
+    this.changedLabel = undefined;
     this.passError = undefined;
     // reset other state
     this.pc = 0;
     this.fillByte = 0;
     // handle input file (as if include)
-    this.handleFile(this.arguments.inputFile, Architecture.M6502); // TODO: handle default architecture
+    this.handleFile(this.arguments.inputFile, this.arguments.arch);
     // check that no items (if, macro, etc) were left open
     if(this.flowStack.length > 1) {
       this.logError(`Unclosed ${this.flowStack.at(-1)!.type === FlowType.IF ? ".if" : ".repeat"} statement`);
@@ -151,13 +151,13 @@ export class Assembler {
       if(!val.defined) {
         // label was not defined at all this pass, delete it and do another
         this.labels.delete(name);
-        this.labelsChanged = true;
+        this.changedLabel = name;
       }
     }
     this.passNum++;
   }
 
-  private handleFile(path: string, arch: Architecture): void {
+  private handleFile(path: string, arch?: Architecture): void {
     if(this.includeStack.length > stackLimit) return this.logError("Include/macro stack limit reached");
     // parse, add include item, run, and pop item
     let parsed = this.readHandler.readAssemblyFile(path, arch);
@@ -286,13 +286,13 @@ export class Assembler {
       // if this the first assigment or a allowed redefinition
       if(current.redefinable || !current.defined) {
         // if it is not a reassignment (so first assignment), indicate if labels changed
-        if(!current.redefinable && current.value !== value) this.labelsChanged = true; 
+        if(!current.redefinable && current.value !== value) this.changedLabel = name; 
         current.value = value;
       }
       current.defined = true;
     } else {
       this.labels.set(name, {value, defined: true, redefinable: reassignment});
-      this.labelsChanged = true;
+      this.changedLabel = name;
     }
     return name;
   }
@@ -399,12 +399,10 @@ export class Assembler {
 
   // evaluate expression
   eval(node: ExpressionNode): ExpressionResult {
+    if(node.type === NodeType.SUBEXPR) {
+      this.logError("Unneeded brackets around expression");
+    }
     return this.expressionHandler.evaluateExpression(node);
-  }
-
-  // get current architecture
-  getArch(): Architecture {
-    return this.includeStack.at(-1)!.arch;
   }
 
   // write byte
@@ -427,6 +425,7 @@ export class Assembler {
   private handleDirective(directive: Directive, args: (ExpressionNode | string)[]): void {
     let flowItem = this.flowStack.at(-1)!;
     let active = flowItem.active && flowItem.taken;
+    let arch = this.includeStack.at(-1)!.arch;
     switch(directive) {
       case Directive.IF: this.dirIf(args[0] as ExpressionNode, active); break;
       case Directive.ELIF: this.dirElif(args[0] as ExpressionNode, flowItem); break;
@@ -448,17 +447,21 @@ export class Assembler {
       case Directive.DB: if(active) this.dirDb(args as ExpressionNode[]); break;
       case Directive.DW: if(active) this.dirDw(args as ExpressionNode[]); break;
       case Directive.DL: if(active) this.dirDl(args as ExpressionNode[]); break;
+      case Directive.DLB: if(active) this.dirDxb(args as ExpressionNode[], 0); break;
+      case Directive.DHB: if(active) this.dirDxb(args as ExpressionNode[], 8); break;
+      case Directive.DBB: if(active) this.dirDxb(args as ExpressionNode[], 16); break;
+      case Directive.DLW: if(active) this.dirDlw(args as ExpressionNode[]); break;
       case Directive.INCBIN: if(active) this.dirIncBin(args[0] as ExpressionNode, args[1] as ExpressionNode | undefined, args[2] as ExpressionNode | undefined); break;
       case Directive.SCOPE: if(active) this.dirScope(args[0] as string); break;
       case Directive.ENDSCOPE: if(active) this.dirEndScope(); break;
       case Directive.ASSERT: if(active) this.dirAssert(args[0] as ExpressionNode, args[1] as ExpressionNode); break;
       case Directive.ARCH: this.dirArch(args[0] as string); break;
-      case Directive.DIRPAGE: if(active) this.opcodeHandler.dirDirPage(args[0] as ExpressionNode); break;
-      case Directive.BANK: if(active) this.opcodeHandler.dirBank(args[0] as ExpressionNode); break;
-      case Directive.ASIZE: if(active) this.opcodeHandler.dirXsize(args[0] as ExpressionNode, false); break;
-      case Directive.ISIZE: if(active) this.opcodeHandler.dirXsize(args[0] as ExpressionNode, true); break;
-      case Directive.MIRROR: if(active) this.opcodeHandler.dirMirror(args[0] as ExpressionNode, args[1] as ExpressionNode, args[2] as ExpressionNode, args[3] as ExpressionNode, args[4] as ExpressionNode | undefined); break;
-      case Directive.CLRMIRROR: if(active) this.opcodeHandler.dirClrMirror(); break;
+      case Directive.DIRPAGE: if(active) this.opcodeHandler.dirDirPage(args[0] as ExpressionNode, arch); break;
+      case Directive.BANK: if(active) this.opcodeHandler.dirBank(args[0] as ExpressionNode, arch); break;
+      case Directive.ASIZE: if(active) this.opcodeHandler.dirXsize(args[0] as ExpressionNode, false, arch); break;
+      case Directive.ISIZE: if(active) this.opcodeHandler.dirXsize(args[0] as ExpressionNode, true, arch); break;
+      case Directive.MIRROR: if(active) this.opcodeHandler.dirMirror(args[0] as ExpressionNode, args[1] as ExpressionNode, args[2] as ExpressionNode, args[3] as ExpressionNode, args[4] as ExpressionNode | undefined, arch); break;
+      case Directive.CLRMIRROR: if(active) this.opcodeHandler.dirClrMirror(arch); break;
       default: throw (directive satisfies never);
     }
   }
@@ -575,6 +578,10 @@ export class Assembler {
 
   private dirAlign(align: ExpressionNode, byte?: ExpressionNode) {
     let alignVal = this.checkRange(this.eval(align), false);
+    if(alignVal === 0) {
+      this.logError("Cannot align to multiple of 0");
+      alignVal = 1;
+    }
     let fill = byte ? this.checkRange(this.eval(byte), true, 8) : this.fillByte;
     let count = alignVal - (this.pc % alignVal);
     if(count !== alignVal) {
@@ -596,6 +603,10 @@ export class Assembler {
 
   private dirRalign(align: ExpressionNode) {
     let alignVal = this.checkRange(this.eval(align), false);
+    if(alignVal === 0) {
+      this.logError("Cannot align to multiple of 0");
+      alignVal = 1;
+    }
     let count = alignVal - (this.pc % alignVal);
     if(count !== alignVal) this.pc += count;
   }
@@ -616,6 +627,18 @@ export class Assembler {
     let vals = this.handleDefineArgs(args).map(n => this.checkRange(n, true, 24));
     this.writeHandler.writeLongs(...vals);
     this.pc += vals.length * 3;
+  }
+
+  private dirDxb(args: ExpressionNode[], shift: number): void {
+    let vals = this.handleDefineArgs(args).map(n => (this.checkNumber(n) >> shift) & 0xff);
+    this.writeHandler.writeBytes(...vals);
+    this.pc += vals.length;
+  }
+
+  private dirDlw(args: ExpressionNode[]): void {
+    let vals = this.handleDefineArgs(args).map(n => this.checkNumber(n) & 0xffff);
+    this.writeHandler.writeWords(...vals);
+    this.pc += vals.length * 2;
   }
 
   private dirIncBin(path: ExpressionNode, start?: ExpressionNode, count?: ExpressionNode): void {
