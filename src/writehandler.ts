@@ -13,27 +13,39 @@ export class WriteHandler {
 
   private output: number[] = [];
   private log: LogItem[] = [];
+  private ignoreDepth = 0;
 
   private outFile: string;
   private listFile?: string;
   private symbolFile?: string;
+  private expand?: boolean;
 
-  constructor(assembler: Assembler, outFile: string, listFile?: string, symbolFile?: string) {
+  constructor(assembler: Assembler, outFile: string, listFile?: string, symbolFile?: string, expandedList?: boolean) {
     this.assembler = assembler;
     this.outFile = outFile;
     this.listFile = listFile;
     this.symbolFile = symbolFile;
+    this.expand = expandedList;
   }
 
   // indicate pass start, reset written content
   startPass(): void {
     this.output = [];
     this.log = [];
+    this.ignoreDepth = 0;
   }
 
   // indicate start of a line, for listing
   startLine(pc: number, raw: string): void {
-    this.log.push({pc, pos: this.output.length, raw});
+    // only add if creating a listing, and only when expanded for depth > 0
+    if(this.listFile && (this.expand || this.ignoreDepth === 0)) {
+      this.log.push({pc, pos: this.output.length, raw});
+    }
+  }
+
+  // modify ignore depth, for ignoring macro's/repeats in listing
+  modifyDepth(val: number): void {
+    this.ignoreDepth += val;
   }
 
   // write generated files

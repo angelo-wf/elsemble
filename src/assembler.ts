@@ -87,7 +87,7 @@ export class Assembler {
 
   constructor(argument: Arguments) {
     this.arguments = argument;
-    this.writeHandler = new WriteHandler(this, argument.outputFile, argument.listingFile, argument.symbolFile);
+    this.writeHandler = new WriteHandler(this, argument.outputFile, argument.listingFile, argument.symbolFile, argument.expandedList);
   }
 
   // assemble using given arguments, returns if it succeeded
@@ -180,6 +180,7 @@ export class Assembler {
     // add include item and run macro, copy over architecture into macro
     let arch = this.includeStack.at(-1)!.arch;
     this.includeStack.push({path: macro.path, line: macro.line, offset: macro.line, isMacro: true, arch});
+    this.writeHandler.modifyDepth(1);
     this.handleLines(macro.lines);
     // check that no repeat was opened, then pop include item
     if(!this.blockStack.at(-1)!.startsWith("@m")) {
@@ -187,6 +188,7 @@ export class Assembler {
       while(!this.blockStack.at(-1)!.startsWith("@m")) this.blockStack.pop();
     }
     this.blockStack.pop();
+    this.writeHandler.modifyDepth(-1);
     this.includeStack.pop();
   }
 
@@ -406,17 +408,17 @@ export class Assembler {
   }
 
   // write byte
-  writeByte(byte: number) {
+  writeByte(byte: number): void {
     this.writeHandler.writeBytes(byte);
   }
 
   // write word
-  writeWord(word: number) {
+  writeWord(word: number): void {
     this.writeHandler.writeWords(word);
   }
 
   // write long
-  writeLong(long: number) {
+  writeLong(long: number): void {
     this.writeHandler.writeLongs(long);
   }
 
@@ -529,9 +531,11 @@ export class Assembler {
       this.blockStack.pop();
       this.blockStack.push(`@r${this.blockNum++}`);
       if(flowItem.name) this.defineLabel(flowItem.name, flowItem.num, false);
+      if(flowItem.num === 1) this.writeHandler.modifyDepth(1);
     } else {
       this.flowStack.pop();
       this.blockStack.pop();
+      if(flowItem.num > 1) this.writeHandler.modifyDepth(-1);
     }
   }
 
@@ -549,7 +553,9 @@ export class Assembler {
   }
 
   private dirInclude(path: ExpressionNode): void {
-    this.handleFile(this.checkString(this.eval(path)), this.includeStack.at(-1)!.arch);
+    let pathStr = this.checkString(this.eval(path));
+    let includeItem = this.includeStack.at(-1)!;
+    this.handleFile(this.readHandler.getPath(pathStr, includeItem.path), includeItem.arch);
   }
 
   private dirOrg(loc: ExpressionNode): void {
@@ -560,7 +566,7 @@ export class Assembler {
     this.fillByte = this.checkRange(this.eval(byte), true, 8);
   }
 
-  private dirPad(loc: ExpressionNode, byte?: ExpressionNode) {
+  private dirPad(loc: ExpressionNode, byte?: ExpressionNode): void {
     let locVal = this.checkRange(this.eval(loc), false);
     let fill = byte ? this.checkRange(this.eval(byte), true, 8) : this.fillByte;
     let count = locVal - this.pc;
@@ -569,14 +575,14 @@ export class Assembler {
     this.pc += count;
   }
 
-  private dirFill(count: ExpressionNode, byte?: ExpressionNode) {
+  private dirFill(count: ExpressionNode, byte?: ExpressionNode): void {
     let countVal = this.checkRange(this.eval(count), false);
     let fill = byte ? this.checkRange(this.eval(byte), true, 8) : this.fillByte;
     this.writeHandler.writeByteTimes(fill, countVal);
     this.pc += countVal;
   }
 
-  private dirAlign(align: ExpressionNode, byte?: ExpressionNode) {
+  private dirAlign(align: ExpressionNode, byte?: ExpressionNode): void {
     let alignVal = this.checkRange(this.eval(align), false);
     if(alignVal === 0) {
       this.logError("Cannot align to multiple of 0");
@@ -590,18 +596,18 @@ export class Assembler {
     }
   }
 
-  private dirRpad(loc: ExpressionNode) {
+  private dirRpad(loc: ExpressionNode): void {
     let locVal = this.checkRange(this.eval(loc), false);
     let count = locVal - this.pc;
     if(count < 0) return this.logError("Attempted to pad backwards");
     this.pc += count;
   }
 
-  private dirRes(count: ExpressionNode) {
+  private dirRes(count: ExpressionNode): void {
     this.pc += this.checkRange(this.eval(count), false);
   }
 
-  private dirRalign(align: ExpressionNode) {
+  private dirRalign(align: ExpressionNode): void {
     let alignVal = this.checkRange(this.eval(align), false);
     if(alignVal === 0) {
       this.logError("Cannot align to multiple of 0");
@@ -642,9 +648,11 @@ export class Assembler {
   }
 
   private dirIncBin(path: ExpressionNode, start?: ExpressionNode, count?: ExpressionNode): void {
+    let pathStr = this.checkString(this.eval(path));
+    let includeItem = this.includeStack.at(-1)!;
     let startVal = start ? this.checkRange(this.eval(start), false) : 0;
     let countVal = count ? this.checkRange(this.eval(count), false) : undefined;
-    let data = this.readHandler.readBinaryFile(this.checkString(this.eval(path)));
+    let data = this.readHandler.readBinaryFile(this.readHandler.getPath(pathStr, includeItem.path));
     if(startVal > data.length) {
       this.logError("Start location beyond file length");
       startVal = 0;

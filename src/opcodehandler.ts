@@ -26,7 +26,7 @@ export class OpcodeHandler {
   }
 
   // indicate a pass started, resetting config
-  startPass() {
+  startPass(): void {
     for(let val of Object.values(this.configs)) {
       val.dirPage = 0;
       val.bank = 0;
@@ -138,127 +138,26 @@ export class OpcodeHandler {
 
   private handleOpArg(arch: Architecture, mode: AdrMode, val: ExpressionResult): [number, number] {
     switch(mode) {
-      case AdrMode.IMM8: {
-        return [this.assembler.checkRange(val, true, 8), 1];
-      }
-      case AdrMode.IMM8P: {
-        return [this.assembler.checkRange(val, false, 8), 1];
-      }
-      case AdrMode.IMM16: {
-        return [this.assembler.checkRange(val, true, 16), 2];
-      }
-      case AdrMode.IMM16P: {
-        return [this.assembler.checkRange(val, false, 16), 2];
-      }
-
-      case AdrMode.IMM816A: {
-        let size = this.configs[arch].aSize;
-        return [this.assembler.checkRange(val, true, size), size / 8];
-      }
-      case AdrMode.IMM816I: {
-        let size = this.configs[arch].iSize;
-        return [this.assembler.checkRange(val, true, size), size / 8];
-      }
-
-      case AdrMode.DP: {
-        let adr = this.assembler.checkRange(val, false, 24);
-        let dpRes = this.checkDp(arch, adr);
-        if(dpRes !== undefined) return [dpRes, 1];
-        this.assembler.logError("Address not reachable");
-        return [0, 1];
-      }
-      case AdrMode.DPABS: {
-        let adr = this.assembler.checkRange(val, false, 24);
-        let dpRes = this.checkDp(arch, adr);
-        if(dpRes !== undefined) return [dpRes, 1];
-        let absRes = this.checkAbs(arch, adr, this.configs[arch].bank);
-        if(absRes !== undefined) return [absRes, 2];
-        this.assembler.logError("Address not reachable");
-        return [0, 2];
-      }
-      case AdrMode.ABS: {
-        let adr = this.assembler.checkRange(val, false, 24);
-        let absRes = this.checkAbs(arch, adr, this.configs[arch].bank);
-        if(absRes !== undefined) return [absRes, 2];
-        this.assembler.logError("Address not reachable");
-        return [0, 2];
-      }
-      case AdrMode.DPABSLONG: {
-        let adr = this.assembler.checkRange(val, false, 24);
-        let dpRes = this.checkDp(arch, adr);
-        if(dpRes !== undefined) return [dpRes, 1];
-        let absRes = this.checkAbs(arch, adr, this.configs[arch].bank);
-        if(absRes !== undefined) return [absRes, 2];
-        return [adr, 3];
-      }
-      case AdrMode.LONG: {
-        return [this.assembler.checkRange(val, false, 24), 3];
-      }
-
-      case AdrMode.ABS0: {
-        let adr = this.assembler.checkRange(val, false, 24);
-        let absRes = this.checkAbs(arch, adr, 0);
-        if(absRes !== undefined) return [absRes, 2];
-        this.assembler.logError("Address not reachable");
-        return [0, 2];
-      }
-      case AdrMode.ABSK: {
-        let adr = this.assembler.checkRange(val, false, 24);
-        let absRes = this.checkAbs(arch, adr, this.assembler.getPc() >> 16);
-        if(absRes !== undefined) return [absRes, 2];
-        this.assembler.logError("Address not reachable");
-        return [0, 2];
-      }
-
-      case AdrMode.REL8: case AdrMode.REL8A: {
-        let offset = mode === AdrMode.REL8A ? 3 : 2;
-        let adr = this.assembler.checkRange(val, false, 24);
-        let absRes = this.checkAbs(arch, adr, this.assembler.getPc() >> 16);
-        if(absRes !== undefined) {
-          let diff = absRes - (this.assembler.getPc() + offset);
-          // clip to signed 16 bit, allow wrapping within bank both ways
-          diff = ((diff & 0xffff) << 16) >> 16;
-          if(diff < -128 || diff > 127) {
-            this.assembler.logError("Branch target out of range");
-            diff = 0;
-          }
-          return [diff & 0xff, 1];
-        }
-        this.assembler.logError("Address not reachable");
-        return [0, 1];
-      }
-      case AdrMode.REL16: {
-        let adr = this.assembler.checkRange(val, false, 24);
-        let absRes = this.checkAbs(arch, adr, this.assembler.getPc() >> 16);
-        if(absRes !== undefined) {
-          let diff = absRes - (this.assembler.getPc() + 3);
-          // clip to signed 16 bit, allow wrapping within bank both ways
-          diff = ((diff & 0xffff) << 16) >> 16;
-          return [diff & 0xffff, 2];
-        }
-        this.assembler.logError("Address not reachable");
-        return [0, 2];
-      }
-
-      case AdrMode.IMM3PO: case AdrMode.IMM3P: {
-        return [this.assembler.checkRange(val, false, 3), 0];
-      }
-      case AdrMode.IMM4PO: {
-        return [this.assembler.checkRange(val, false, 4), 0];
-      }
-      case AdrMode.ABS13: {
-        let adr = this.assembler.checkRange(val, false, 24);
-        let absRes = this.checkAbs(arch, adr, this.configs[arch].bank);
-        if(absRes !== undefined) {
-          if(absRes >= 0x2000) {
-            this.assembler.logError("Address out of range");
-            absRes &= 0x1fff;
-          }
-          return [absRes, 2];
-        }
-        this.assembler.logError("Address not reachable");
-        return [0, 2];
-      }
+      case AdrMode.IMM8: return this.adrImmediate(val, true, 8);
+      case AdrMode.IMM8P: return this.adrImmediate(val, false, 8);
+      case AdrMode.IMM16: return this.adrImmediate(val, true, 16);
+      case AdrMode.IMM16P: return this.adrImmediate(val, false, 16);
+      case AdrMode.IMM816A: return this.adrImmediate(val, true, this.configs[arch].aSize);
+      case AdrMode.IMM816I: return this.adrImmediate(val, true, this.configs[arch].iSize);
+      case AdrMode.DP: return this.adrDpAbs(val, true, arch);
+      case AdrMode.DPABS: return this.adrDpAbs(val, false, arch);
+      case AdrMode.ABS: return this.adrAbsolute(val, this.configs[arch].bank, arch);
+      case AdrMode.DPABSLONG: return this.adrDpAbsLong(val, false, arch);
+      case AdrMode.LONG: return this.adrDpAbsLong(val, true, arch);
+      case AdrMode.ABS0: return this.adrAbsolute(val, 0, arch);
+      case AdrMode.ABSK: return this.adrAbsolute(val, this.assembler.getPc() >> 16, arch);
+      case AdrMode.REL8: return this.adrRelative(val, 2, false, arch);
+      case AdrMode.REL8A: return this.adrRelative(val, 3, false, arch);
+      case AdrMode.REL16: return this.adrRelative(val, 3, true, arch);
+      case AdrMode.IMM3PO: return this.adrSmallImmediate(val, 3);
+      case AdrMode.IMM3P: return this.adrSmallImmediate(val, 3);
+      case AdrMode.IMM4PO: return this.adrSmallImmediate(val, 4);
+      case AdrMode.ABS13: return this.adrAbsBit(val, arch);
       default: throw (mode satisfies never);
     }
   }
@@ -291,5 +190,77 @@ export class OpcodeHandler {
     let test2 = this.configs[arch].memMap[bank2];
     if(test2 && bank1 === test2.bank && adr >= test2.min && adr <= test2.max) return true;
     return false;
+  }
+
+  // address mode type checks
+
+  private adrImmediate(val: ExpressionResult, negative: boolean, size: number): [number, number] {
+    return [this.assembler.checkRange(val, negative, size), size / 8];
+  }
+
+  private adrSmallImmediate(val: ExpressionResult, size: number): [number, number] {
+    return [this.assembler.checkRange(val, false, size), 0];
+  }
+
+  private adrAbsolute(val: ExpressionResult, bank: number, arch: Architecture): [number, number] {
+    let adr = this.assembler.checkRange(val, false, 24);
+    let absRes = this.checkAbs(arch, adr, bank);
+    if(absRes !== undefined) return [absRes, 2];
+    this.assembler.logError("Address not reachable");
+    return [0, 2];
+  }
+
+  private adrDpAbs(val: ExpressionResult, dpOnly: boolean, arch: Architecture): [number, number] {
+    let adr = this.assembler.checkRange(val, false, 24);
+    let dpRes = this.checkDp(arch, adr);
+    if(dpRes !== undefined) return [dpRes, 1];
+    if(!dpOnly) {
+      let absRes = this.checkAbs(arch, adr, this.configs[arch].bank);
+      if(absRes !== undefined) return [absRes, 2];
+    }
+    this.assembler.logError("Address not reachable");
+    return [0, 2];
+  }
+
+  private adrDpAbsLong(val: ExpressionResult, longOnly: boolean, arch: Architecture): [number, number] {
+    let adr = this.assembler.checkRange(val, false, 24);
+    if(!longOnly) {
+      let dpRes = this.checkDp(arch, adr);
+      if(dpRes !== undefined) return [dpRes, 1];
+      let absRes = this.checkAbs(arch, adr, this.configs[arch].bank);
+      if(absRes !== undefined) return [absRes, 2];
+    }
+    return [adr, 3];
+  }
+
+  private adrRelative(val: ExpressionResult, offset: number, long: boolean, arch: Architecture): [number, number] {
+    let adr = this.assembler.checkRange(val, false, 24);
+    let absRes = this.checkAbs(arch, adr, this.assembler.getPc() >> 16);
+    if(absRes !== undefined) {
+      let diff = absRes - (this.assembler.getPc() + offset);
+      // clip to signed 16 bit, allow wrapping within bank both ways
+      diff = ((diff & 0xffff) << 16) >> 16;
+      if(!long && (diff < -128 || diff > 127)) {
+        this.assembler.logError("Branch target out of range");
+        diff = 0;
+      }
+      return long ? [diff & 0xffff, 2] : [diff & 0xff, 1];
+    }
+    this.assembler.logError("Address not reachable");
+    return [0, long ? 2 : 1];
+  }
+
+  private adrAbsBit(val: ExpressionResult, arch: Architecture): [number, number] {
+    let adr = this.assembler.checkRange(val, false, 24);
+    let absRes = this.checkAbs(arch, adr, this.configs[arch].bank);
+    if(absRes !== undefined) {
+      if(absRes >= 0x2000) {
+        this.assembler.logError("Address out of range");
+        absRes &= 0x1fff;
+      }
+      return [absRes, 2];
+    }
+    this.assembler.logError("Address not reachable");
+    return [0, 2];
   }
 }

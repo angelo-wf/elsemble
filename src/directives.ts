@@ -135,7 +135,7 @@ export function parseDirectiveLine(directive: string, line: string): [(Expressio
   return [args, dir];
 }
 
-function parseNonExprArg(line: string, isBlockLabel: boolean): [out: string, line: string] {
+function parseNonExprArg(line: string, isBlockLabel: boolean): [string, string] {
   let test = line.match(isBlockLabel ? /^@[A-Za-z_]\w*/ : /^[A-Za-z_]\w*/);
   if(test) {
     return [test[0], line.slice(test[0].length)];

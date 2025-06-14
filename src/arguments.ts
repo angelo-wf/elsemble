@@ -14,7 +14,9 @@ export type Arguments = {
   symbolFile?: string,
   verbose?: boolean,
   passLimit?: number,
-  arch?: Architecture
+  arch?: Architecture,
+  expandedList?: boolean,
+  help?: boolean
 };
 
 enum Option {
@@ -22,7 +24,9 @@ enum Option {
   LISTING = "listing",
   VERBOSE = "verbose",
   PASSLIMIT = "passlimit",
-  ARCH = "arch"
+  ARCH = "arch",
+  EXPANDLISTING = "expandlisting",
+  HELP = "help"
 }
 
 enum OptionType {
@@ -35,15 +39,18 @@ enum OptionType {
 type OptionInfo<K> = {
   opt: K,
   value: keyof Arguments,
-  optionType: OptionType
+  optionType: OptionType,
+  help: string
 }
 
 const longOptions: {[key in Option]: OptionInfo<key>} = {
-  [Option.SYMBOLS]: {opt: Option.SYMBOLS, value: "symbolFile", optionType: OptionType.STRING},
-  [Option.LISTING]: {opt: Option.LISTING, value: "listingFile", optionType: OptionType.STRING},
-  [Option.VERBOSE]: {opt: Option.VERBOSE, value: "verbose", optionType: OptionType.FLAG},
-  [Option.PASSLIMIT]: {opt: Option.PASSLIMIT, value: "passLimit", optionType: OptionType.NUMBER},
-  [Option.ARCH]: {opt: Option.ARCH, value: "arch", optionType: OptionType.ARCH}
+  [Option.SYMBOLS]: {opt: Option.SYMBOLS, value: "symbolFile", optionType: OptionType.STRING, help: "Create synbol file"},
+  [Option.LISTING]: {opt: Option.LISTING, value: "listingFile", optionType: OptionType.STRING, help: "Create listing file"},
+  [Option.VERBOSE]: {opt: Option.VERBOSE, value: "verbose", optionType: OptionType.FLAG, help: "Verbose mode"},
+  [Option.PASSLIMIT]: {opt: Option.PASSLIMIT, value: "passLimit", optionType: OptionType.NUMBER, help: "Set pass limit"},
+  [Option.ARCH]: {opt: Option.ARCH, value: "arch", optionType: OptionType.ARCH, help: "Set architecture"},
+  [Option.EXPANDLISTING]: {opt: Option.EXPANDLISTING, value: "expandedList", optionType: OptionType.FLAG, help: "Create expanded listing"},
+  [Option.HELP]: {opt: Option.HELP, value: "help", optionType: OptionType.FLAG, help: "Print this help text"}
 };
 
 const shortOptions: {[p: string]: Option} = {
@@ -51,17 +58,19 @@ const shortOptions: {[p: string]: Option} = {
   "l": Option.LISTING,
   "v": Option.VERBOSE,
   "p": Option.PASSLIMIT,
-  "a": Option.ARCH
+  "a": Option.ARCH,
+  "e": Option.EXPANDLISTING,
+  "h": Option.HELP
 };
 
 const positionalOptions: OptionInfo<number>[] = [
-  {opt: 0, value: "inputFile", optionType: OptionType.STRING},
-  {opt: 1, value: "outputFile", optionType: OptionType.STRING}
+  {opt: 0, value: "inputFile", optionType: OptionType.STRING, help: ""},
+  {opt: 1, value: "outputFile", optionType: OptionType.STRING, help: ""}
 ];
 
 // parse cli arguments in Arguments object
 export function parseArguments(args: string[]): Arguments {
-  if(args.length === 0) throw new ArgumentError("No arguments provided");
+  if(args.length === 0) throw new ArgumentError("No arguments provided, use -h for help");
   // go over given arguments
   let pos = 0;
   let positional = 0;
@@ -127,4 +136,13 @@ function parseArch(arch: string): Architecture {
     }
     throw e;
   }
+}
+
+// get help text
+export function getHelp(): string {
+  let optString = Object.entries(shortOptions).map(e => {
+    let optInfo = longOptions[e[1]];
+    return `-${e[0]}, --${optInfo.opt}${optInfo.optionType !== OptionType.FLAG ? " <arg>" : ""}: ${optInfo.help}`;
+  }).join("\n");
+  return "Usage: elsemble [options] <infile> <outfile>\nOptions:\n" + optString;
 }

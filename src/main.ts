@@ -1,4 +1,4 @@
-import { ArgumentError, Arguments, parseArguments } from "./arguments.js";
+import { ArgumentError, Arguments, getHelp, parseArguments } from "./arguments.js";
 import { Assembler } from "./assembler.js";
 
 // parse arguments
@@ -13,6 +13,7 @@ try {
     throw e;
   }
 }
+if(args.help) console.log(getHelp());
 // assemble
 let assembler = new Assembler(args);
 if(!assembler.assemble()) {
