@@ -112,6 +112,8 @@ export function parseDirectiveLine(directive: string, line: string): [(Expressio
     if(info.minCount > 0) throw new ParserError("Too few arguments");
     return [[], dir];
   }
+  // check for required space after it
+  line = consumeSpaces(line, true);
   // parse arguments
   let expectComma = false;
   let args: (ExpressionNode | string)[] = [];

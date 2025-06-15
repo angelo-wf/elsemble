@@ -64,13 +64,15 @@ export function parseLine(line: string, arch?: Architecture): Line {
     line = line.slice(labelTest[0].length);
   }
   // check for directive or macro
-  let dirTest = line.match(/^\s*([\.!]\w[\w\.]*)\s*/);
+  let dirTest = line.match(/^\s*([\.!]\w[\w\.]*)/);
   if(dirTest) {
     let directive = dirTest[1]!;
     let argumentStr = line.slice(dirTest[0].length);
     if(directive.startsWith("!")) {
       let args: ExpressionNode[] = [];
       if(!checkLineEnd(argumentStr)) {
+        // check for required space after it
+        argumentStr = consumeSpaces(argumentStr, true);
         [args, argumentStr] = parseArgumentList(argumentStr);
         if(!checkLineEnd(argumentStr)) throw new ParserError("Trailing characters after expression");
       }
@@ -81,10 +83,18 @@ export function parseLine(line: string, arch?: Architecture): Line {
     }
   }
   // check for opcode
-  let opcodeTest = line.match(/^\s*(\w[\w\.]*)\s*/);
+  let opcodeTest = line.match(/^\s*(\w[\w\.]*)/);
   if(opcodeTest) {
     let opcode = opcodeTest[1]!.toLowerCase();
-    let argumentStr = cleanExpression(line.slice(opcodeTest[0].length));
+    let argString = line.slice(opcodeTest[0].length);
+    let argumentStr: string;
+    if(checkLineEnd(argString)) {
+      argumentStr = "";
+    } else {
+      // check for space after opcode
+      argString = consumeSpaces(argString, true);
+      argumentStr = cleanExpression(argString);
+    }
     if(!arch) throw new ParserError("Opcode encuntered without architecture set");
     let [args, modeNum] = parseOpcode(arch, opcode, argumentStr);
     return {type: LineType.OPCODE, label, opcode, arguments: args, modeNum, arch, raw};

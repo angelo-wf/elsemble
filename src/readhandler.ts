@@ -47,11 +47,11 @@ export class ReadHandler {
     }
     // parse the data
     let parsed = this.parseAssemblyFile(data, path, arch);
-    this.parserCache.set(path, parsed);
-    return parsed;
+    if(parsed) this.parserCache.set(path, parsed);
+    return parsed ?? [];
   }
 
-  private parseAssemblyFile(content: string, path: string, arch?: Architecture): Line[] {
+  private parseAssemblyFile(content: string, path: string, arch?: Architecture): Line[] | undefined {
     let output: Line[] = [];
     let lineNum = 1;
     try {
@@ -68,7 +68,7 @@ export class ReadHandler {
     } catch(e) {
       if(e instanceof ParserError) {
         this.assembler.logError(e.message, true, [path, lineNum]);
-        return [];
+        return undefined;
       } else {
         throw e;
       }

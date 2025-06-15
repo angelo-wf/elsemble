@@ -295,8 +295,9 @@ function handleStringEscapes(str: string): string {
   return out;
 }
 
-// consume all space-characters at the start of the string
-export function consumeSpaces(expr: string): string {
+// consume all space-characters at the start of the string, optionally throwing if none were found
+export function consumeSpaces(expr: string, required = false): string {
   let spaceTest = expr.match(/^\s*/);
+  if(required && spaceTest![0].length === 0) throw new ParserError("Expected space after opcode, directive or macro");
   return expr.slice(spaceTest![0].length);
 }
