@@ -1,8 +1,10 @@
 import { consumeSpaces, ExpressionNode, parseExpression } from "./expressionparser.js";
-import { checkLineEnd, ParserError } from "./lineparser.js";
+import { checkLabel, checkLineEnd, ParserError } from "./lineparser.js";
 
 export enum Directive {
   IF = "if",
+  IFDEF = "ifdef",
+  IFNDEF = "ifndef",
   ELIF = "elif",
   ELSE = "else",
   ENDIF = "endif",
@@ -30,19 +32,23 @@ export enum Directive {
   SCOPE = "scope",
   ENDSCOPE = "endscope",
   ASSERT = "assert",
+  CHARMAP = "charmap",
+  CLRCHARMAP = "clrcharmap",
   ARCH = "arch",
   DIRPAGE = "dirpage",
   BANK = "bank",
   ASIZE = "asize",
   ISIZE = "isize",
   MIRROR = "mirror",
-  CLRMIRROR = "clrmirror"
+  CLRMIRROR = "clrmirror",
+  SMART = "smart"
 };
 
 enum ArgumentType {
   EXPR,
   NAME,
-  BLOCKLBL
+  BLOCKLBL,
+  LABEL
 };
 
 type DirectiveInfo<K> = {
@@ -54,6 +60,8 @@ type DirectiveInfo<K> = {
 
 const directiveArgs: {[key in Directive]: DirectiveInfo<key>} = {
   [Directive.IF]: {dir: Directive.IF, minCount: 1, types: [ArgumentType.EXPR]},
+  [Directive.IFDEF]: {dir: Directive.IFDEF, minCount: 1, types: [ArgumentType.LABEL]},
+  [Directive.IFNDEF]: {dir: Directive.IFNDEF, minCount: 1, types: [ArgumentType.LABEL]},
   [Directive.ELIF]: {dir: Directive.ELIF, minCount: 1, types: [ArgumentType.EXPR]},
   [Directive.ELSE]: {dir: Directive.ELSE, minCount: 0, types: []},
   [Directive.ENDIF]: {dir: Directive.ENDIF, minCount: 0, types: []},
@@ -81,13 +89,16 @@ const directiveArgs: {[key in Directive]: DirectiveInfo<key>} = {
   [Directive.SCOPE]: {dir: Directive.SCOPE, minCount: 1, types: [ArgumentType.NAME]},
   [Directive.ENDSCOPE]: {dir: Directive.ENDSCOPE, minCount: 0, types: []},
   [Directive.ASSERT]: {dir: Directive.ASSERT, minCount: 2, types: [ArgumentType.EXPR, ArgumentType.EXPR]},
+  [Directive.CHARMAP]: {dir:Directive.CHARMAP, minCount: 2, types: [ArgumentType.EXPR, ArgumentType.EXPR]},
+  [Directive.CLRCHARMAP]: {dir: Directive.CLRCHARMAP, minCount: 0, types: []},
   [Directive.ARCH]: {dir: Directive.ARCH, minCount: 1, types: [ArgumentType.NAME]},
   [Directive.DIRPAGE]: {dir: Directive.DIRPAGE, minCount: 1, types: [ArgumentType.EXPR]},
   [Directive.BANK]: {dir: Directive.BANK, minCount: 1, types: [ArgumentType.EXPR]},
   [Directive.ASIZE]: {dir: Directive.ASIZE, minCount: 1, types: [ArgumentType.EXPR]},
   [Directive.ISIZE]: {dir: Directive.ISIZE, minCount: 1, types: [ArgumentType.EXPR]},
   [Directive.MIRROR]: {dir: Directive.MIRROR, minCount: 4, types: [ArgumentType.EXPR, ArgumentType.EXPR, ArgumentType.EXPR, ArgumentType.EXPR, ArgumentType.EXPR]},
-  [Directive.CLRMIRROR]: {dir: Directive.CLRMIRROR, minCount: 0, types: []}
+  [Directive.CLRMIRROR]: {dir: Directive.CLRMIRROR, minCount: 0, types: []},
+  [Directive.SMART]: {dir: Directive.SMART, minCount: 1, types: [ArgumentType.NAME]}
 };
 
 // parse a directive line, giving the directive and list of arguments (type depends on specifief type for directive)
@@ -123,6 +134,7 @@ export function parseDirectiveLine(directive: string, line: string): [(Expressio
         case ArgumentType.EXPR: [arg, line] = parseExpression(line); break;
         case ArgumentType.NAME: [arg, line] = parseNonExprArg(line, false); break;
         case ArgumentType.BLOCKLBL: [arg, line] = parseNonExprArg(line, true); break;
+        case ArgumentType.LABEL: [arg, line] = parseLabel(line); break;
         default: throw (type satisfies never);
       }
       args.push(arg);
@@ -141,4 +153,12 @@ function parseNonExprArg(line: string, isBlockLabel: boolean): [string, string] 
     return [test[0], line.slice(test[0].length)];
   }
   throw new ParserError(`Expected ${isBlockLabel ? "block label" : "name"} as argument`);
+}
+
+function parseLabel(line: string): [string, string] {
+  let test = line.match(/^[\w@\.:]+/);
+  if(test) {
+    return [checkLabel(test[0]), line.slice(test[0].length)];
+  }
+  throw new ParserError(`Expected label as argument`);
 }

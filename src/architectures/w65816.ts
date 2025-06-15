@@ -1,4 +1,4 @@
-import { addItem, AdrMode, OpcodeMap } from "../opcodes.js";
+import { addItem, AdrMode, OpcodeMap, SpecialOp } from "../opcodes.js";
 
 const regImpl = /^$/i;
 const regAccu = /^a?$/i;
@@ -181,8 +181,8 @@ export function createW65816Map(): OpcodeMap {
   addDpage(map, "pei", regIndi, 0xd4);
   addGener(map, "per", regAdrs, 0x62, AdrMode.REL16);
 
-  addGener(map, "rep", regImmi, 0xc2, AdrMode.IMM8);
-  addGener(map, "sep", regImmi, 0xe2, AdrMode.IMM8);
+  addGener(map, "rep", regImmi, 0xc2, AdrMode.IMM8, SpecialOp.REP);
+  addGener(map, "sep", regImmi, 0xe2, AdrMode.IMM8, SpecialOp.SEP);
 
   addBlmov(map, "mvp", regBmov, 0x44);
   addBlmov(map, "mvn", regBmov, 0x54);
@@ -259,8 +259,8 @@ function addImpli(map: OpcodeMap, opcode: string, regex: RegExp, val: number): v
   addItem(map, opcode, {regex, adrs: [], vals: [val], argMap: [-1]});
 }
 
-function addGener(map: OpcodeMap, opcode: string, regex: RegExp, val: number, mode: AdrMode): void {
-  addItem(map, opcode, {regex, adrs: [mode], vals: [val], argMap: [-1, 1]});
+function addGener(map: OpcodeMap, opcode: string, regex: RegExp, val: number, mode: AdrMode, spc?: SpecialOp): void {
+  addItem(map, opcode, {regex, adrs: [mode], vals: [val], argMap: [-1, 1], spc});
 }
 
 function addImmid(map: OpcodeMap, opcode: string, regex: RegExp, val: number, mode: AdrMode): void {

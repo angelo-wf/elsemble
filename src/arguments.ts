@@ -1,4 +1,4 @@
-import { ParserError } from "./lineparser.js";
+import { checkLabel, ParserError } from "./lineparser.js";
 import { Architecture, parseArchitecture } from "./opcodes.js";
 
 export class ArgumentError extends Error {
@@ -16,6 +16,7 @@ export type Arguments = {
   passLimit?: number,
   arch?: Architecture,
   expandedList?: boolean,
+  defines: [string, number][],
   help?: boolean
 };
 
@@ -26,6 +27,7 @@ enum Option {
   PASSLIMIT = "passlimit",
   ARCH = "arch",
   EXPANDLISTING = "expandlisting",
+  DEFINE = "define",
   HELP = "help"
 }
 
@@ -33,7 +35,8 @@ enum OptionType {
   FLAG,
   STRING,
   NUMBER,
-  ARCH
+  ARCH,
+  DEFINE
 }
 
 type OptionInfo<K> = {
@@ -50,6 +53,7 @@ const longOptions: {[key in Option]: OptionInfo<key>} = {
   [Option.PASSLIMIT]: {opt: Option.PASSLIMIT, value: "passLimit", optionType: OptionType.NUMBER, help: "Set pass limit"},
   [Option.ARCH]: {opt: Option.ARCH, value: "arch", optionType: OptionType.ARCH, help: "Set architecture"},
   [Option.EXPANDLISTING]: {opt: Option.EXPANDLISTING, value: "expandedList", optionType: OptionType.FLAG, help: "Create expanded listing"},
+  [Option.DEFINE]: {opt: Option.DEFINE, value: "defines", optionType: OptionType.DEFINE, help: "Define label"},
   [Option.HELP]: {opt: Option.HELP, value: "help", optionType: OptionType.FLAG, help: "Print this help text"}
 };
 
@@ -60,6 +64,7 @@ const shortOptions: {[p: string]: Option} = {
   "p": Option.PASSLIMIT,
   "a": Option.ARCH,
   "e": Option.EXPANDLISTING,
+  "d": Option.DEFINE,
   "h": Option.HELP
 };
 
@@ -74,7 +79,7 @@ export function parseArguments(args: string[]): Arguments {
   // go over given arguments
   let pos = 0;
   let positional = 0;
-  let parsed: Arguments = {inputFile: "", outputFile: ""};
+  let parsed: Arguments = {inputFile: "", outputFile: "", defines: []};
   while(pos < args.length) {
     let arg = args[pos++]!;
     if(arg.startsWith("--")) {
@@ -122,6 +127,7 @@ function handleOption(parsed: Arguments, optInfo: OptionInfo<Option | number>, a
     case OptionType.NUMBER: (parsed[optInfo.value] as number) = parseInt(arg); break;
     case OptionType.STRING: (parsed[optInfo.value] as string) = arg; break;
     case OptionType.ARCH: (parsed[optInfo.value] as Architecture) = parseArch(arg); break;
+    case OptionType.DEFINE: (parsed[optInfo.value] as [string, number][]).push(parseDefine(arg)); break;
     default: throw optInfo.optionType satisfies never;
   }
   return true;
@@ -131,11 +137,20 @@ function parseArch(arch: string): Architecture {
   try {
     return parseArchitecture(arch);
   } catch(e) {
-    if(e instanceof ParserError) {
-      throw new ArgumentError(e.message);
-    }
+    if(e instanceof ParserError) throw new ArgumentError(e.message);
     throw e;
   }
+}
+
+function parseDefine(define: string): [string, number] {
+  let [name, val] = define.includes("=") ? define.split("=") : [define, "1"];
+  try {
+    name = checkLabel(name!);
+  } catch(e) {
+    if(e instanceof ParserError) throw new ArgumentError(e.message);
+    throw e;
+  }
+  return [name, parseInt(val!)];
 }
 
 // get help text

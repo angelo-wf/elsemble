@@ -82,6 +82,9 @@ export class Assembler {
   private passError?: string;
   private passNum = 0;
 
+  private charMap: Map<string, number> = new Map();
+  private customChars = false;
+
   private pc = 0;
   private fillByte = 0;
 
@@ -129,12 +132,18 @@ export class Assembler {
     for(let [_, val] of this.labels) val.defined = false;
     this.scope = "";
     this.globalLabel = undefined;
+    // define labels that were given as arguments
+    for(let [name, val] of this.arguments.defines) {
+      this.defineLabel(name, val, false);
+    }
     // reset macros (clear, as they need to be defined before use)
     this.macros.clear();
     this.definingMacro = undefined;
     // reset pass state
     this.changedLabel = undefined;
     this.passError = undefined;
+    // reset charmap (using clear directive)
+    this.dirClrCharMap();
     // reset other state
     this.pc = 0;
     this.fillByte = 0;
@@ -246,7 +255,7 @@ export class Assembler {
   }
 
   // log an error in this pass (but does not terminate pass)
-  logError(msg: string, location?: [string, number]): void {
+  logError(msg: string, priority?: boolean, location?: [string, number]): void {
     let error = msg;
     if(location) {
       error = `${location[0]}:${location[1]} ${msg}`;
@@ -256,7 +265,7 @@ export class Assembler {
       error = `${includeInfo.path}:${includeInfo.line} ${msg}`;
       error += this.getStackTrace(includeInfo.isMacro, 1);
     }
-    if(!this.passError) this.passError = error;
+    if(!this.passError || priority) this.passError = error;
   }
 
   private getStackTrace(isMacro: boolean, skip: number): string {
@@ -318,6 +327,19 @@ export class Assembler {
     return 0;
   }
 
+  private isLabelDefined(name: string): boolean {
+    let expandedNames = this.expandLabelName(name);
+    // try each label to test in order
+    for(let name of expandedNames) {
+      if(this.labels.has(name)) {
+        let label = this.labels.get(name)!;
+        // redefinable labels are only defined after definition
+        return !label.redefinable || label.defined;
+      }
+    }
+    return false;
+  }
+
   private expandLabelName(label: string): string[] {
     if(label.startsWith("@")) {
       // block label, check if in block and return list to search
@@ -363,7 +385,7 @@ export class Assembler {
     return out;
   }
 
-  // value testing
+  // value testing / writing
 
   // check and turn result into number
   checkNumber(val: ExpressionResult): number {
@@ -399,6 +421,15 @@ export class Assembler {
     return num;
   }
 
+  // map character to number
+  mapCharacter(char: string): number {
+    if(!this.charMap.has(char)) {
+      this.logError(`No mapping for character '${char}'`);
+      return 0;
+    }
+    return this.charMap.get(char)!;
+  }
+
   // evaluate expression
   eval(node: ExpressionNode): ExpressionResult {
     if(node.type === NodeType.SUBEXPR) {
@@ -430,6 +461,8 @@ export class Assembler {
     let arch = this.includeStack.at(-1)!.arch;
     switch(directive) {
       case Directive.IF: this.dirIf(args[0] as ExpressionNode, active); break;
+      case Directive.IFDEF: this.dirIfxdef(args[0] as string, false, active); break;
+      case Directive.IFNDEF: this.dirIfxdef(args[0] as string, true, active); break;
       case Directive.ELIF: this.dirElif(args[0] as ExpressionNode, flowItem); break;
       case Directive.ELSE: this.dirElse(flowItem); break;
       case Directive.ENDIF: this.dirEndif(flowItem); break;
@@ -457,6 +490,8 @@ export class Assembler {
       case Directive.SCOPE: if(active) this.dirScope(args[0] as string); break;
       case Directive.ENDSCOPE: if(active) this.dirEndScope(); break;
       case Directive.ASSERT: if(active) this.dirAssert(args[0] as ExpressionNode, args[1] as ExpressionNode); break;
+      case Directive.CHARMAP: if(active) this.dirCharMap(args[0] as ExpressionNode, args[1] as ExpressionNode); break;
+      case Directive.CLRCHARMAP: if(active) this.dirClrCharMap(); break;
       case Directive.ARCH: this.dirArch(args[0] as string); break;
       case Directive.DIRPAGE: if(active) this.opcodeHandler.dirDirPage(args[0] as ExpressionNode, arch); break;
       case Directive.BANK: if(active) this.opcodeHandler.dirBank(args[0] as ExpressionNode, arch); break;
@@ -464,6 +499,7 @@ export class Assembler {
       case Directive.ISIZE: if(active) this.opcodeHandler.dirXsize(args[0] as ExpressionNode, true, arch); break;
       case Directive.MIRROR: if(active) this.opcodeHandler.dirMirror(args[0] as ExpressionNode, args[1] as ExpressionNode, args[2] as ExpressionNode, args[3] as ExpressionNode, args[4] as ExpressionNode | undefined, arch); break;
       case Directive.CLRMIRROR: if(active) this.opcodeHandler.dirClrMirror(arch); break;
+      case Directive.SMART: if(active) this.opcodeHandler.dirSmart(args[0] as string); break;
       default: throw (directive satisfies never);
     }
   }
@@ -474,7 +510,7 @@ export class Assembler {
       let res = this.eval(arg);
       if(typeof res === "string") {
         for(let char of [...res]) {
-          out.push(char.codePointAt(0)!); // TODO: use char mapping
+          out.push(this.mapCharacter(char));
         }
       } else {
         out.push(res);
@@ -487,6 +523,12 @@ export class Assembler {
 
   private dirIf(test: ExpressionNode, active: boolean): void {
     let res = this.eval(test) !== 0;
+    this.flowStack.push({type: FlowType.IF, active, taken: res, found: res, inElse: false});
+  }
+
+  private dirIfxdef(test: string, not: boolean, active: boolean): void {
+    let res = this.isLabelDefined(test);
+    if(not) res = !res;
     this.flowStack.push({type: FlowType.IF, active, taken: res, found: res, inElse: false});
   }
 
@@ -678,6 +720,25 @@ export class Assembler {
   private dirAssert(test: ExpressionNode, msg: ExpressionNode): void {
     let res = this.eval(test) === 0;
     if(res) this.logError(`Assert: ${this.checkString(this.eval(msg))}`);
+  }
+
+  private dirCharMap(chars: ExpressionNode, val: ExpressionNode): void {
+    let charList = this.checkString(this.eval(chars));
+    let startVal = this.checkNumber(this.eval(val));
+    if(!this.customChars) this.charMap.clear();
+    for(let c of [...charList]) {
+      this.charMap.set(c, startVal++);
+    }
+    this.customChars = true;
+  }
+
+  private dirClrCharMap(): void {
+    this.charMap.clear();
+    // set ascii
+    for(let i = 0; i < 128; i++) {
+      this.charMap.set(String.fromCodePoint(i), i);
+    }
+    this.customChars = false;
   }
 
   private dirArch(name: string): void {

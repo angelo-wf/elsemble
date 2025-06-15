@@ -20,6 +20,7 @@ export class OpcodeHandler {
     [Architecture.W65816]: {dirPage: 0, bank: 0, aSize: 8, iSize: 8, memMap: []},
     [Architecture.SPC700]: {dirPage: 0, bank: 0, aSize: 8, iSize: 8, memMap: []}
   };
+  private smart = false;
 
   constructor(assembler: Assembler) {
     this.assembler = assembler;
@@ -34,6 +35,7 @@ export class OpcodeHandler {
       val.iSize = 8;
       for(let i = 0; i < 256; i++) val.memMap[i] = undefined;
     }
+    this.smart = false;
   }
 
   // generate opcode
@@ -80,7 +82,23 @@ export class OpcodeHandler {
       this.assembler.writeWord(vals[0]![0] | (vals[1]![0] << 13));
       bytes += 2;
     }
+    // handle special cases for .smart handling
+    if(this.smart && opInfo.spc) this.handleSmart(arch, opInfo.spc, vals);
     return bytes;
+  }
+
+  private handleSmart(arch: Architecture, type: SpecialOp, vals: [number, number][]): void {
+    if(type === SpecialOp.REP) {
+      if((vals[0]![0] & 0x20) !== 0) this.configs[arch].aSize = 16;
+      if((vals[0]![0] & 0x10) !== 0) this.configs[arch].iSize = 16;
+    }
+    if(type === SpecialOp.SEP) {
+      if((vals[0]![0] & 0x20) !== 0) this.configs[arch].aSize = 8;
+      if((vals[0]![0] & 0x10) !== 0) this.configs[arch].iSize = 8;
+    }
+    if(type === SpecialOp.SETP || type == SpecialOp.CLRP) {
+      this.configs[arch].dirPage = type === SpecialOp.SETP ? 0x100 : 0;
+    }
   }
 
   // config directives
@@ -133,6 +151,12 @@ export class OpcodeHandler {
       this.configs[arch].memMap[i] = undefined;
     }
   }
+
+  dirSmart(val: string): void {
+    let valStr = this.assembler.checkString(val);
+    if(valStr !== "on" && valStr !== "off") return this.assembler.logError("Expected 'on' or 'off'");
+    this.smart = valStr === "on";
+  } 
 
   // opcode argument / address handling
 

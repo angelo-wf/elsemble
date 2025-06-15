@@ -34,7 +34,11 @@ export enum AdrMode {
 };
 
 export enum SpecialOp {
-  ABSBIT
+  ABSBIT,
+  SEP,
+  REP,
+  SETP,
+  CLRP
 };
 
 export type OpcodeInfo = {

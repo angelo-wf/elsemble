@@ -25,7 +25,7 @@ export class ReadHandler {
       let data = fs.readFileSync(path);
       arr = new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
     } catch(e) {
-      this.assembler.logError(`Failed to read file '${path}'`);
+      this.assembler.logError(`Failed to read file '${path}'`, true);
       return new Uint8Array(0);
     }
     this.binaryCache.set(path, arr);
@@ -42,7 +42,7 @@ export class ReadHandler {
       data = fs.readFileSync(path, "utf-8");
       data = data.replaceAll("\r", "");
     } catch(e) {
-      this.assembler.logError(`Failed to read file '${path}'`);
+      this.assembler.logError(`Failed to read file '${path}'`, true);
       return [];
     }
     // parse the data
@@ -67,7 +67,7 @@ export class ReadHandler {
       return output;
     } catch(e) {
       if(e instanceof ParserError) {
-        this.assembler.logError(e.message, [path, lineNum]);
+        this.assembler.logError(e.message, true, [path, lineNum]);
         return [];
       } else {
         throw e;

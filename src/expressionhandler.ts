@@ -15,7 +15,7 @@ export class ExpressionHandler {
     switch(node.type) {
       case NodeType.ROOT: return this.evaluateExpression(node.right!); // should never happen
       case NodeType.VALUE: return node.value;
-      case NodeType.CHAR: return node.char.codePointAt(0)!; // TODO: use char map
+      case NodeType.CHAR: return this.assembler.mapCharacter(node.char);
       case NodeType.SUBEXPR: return this.evaluateExpression(node.expression);
       case NodeType.PC: return this.assembler.getPc();
       case NodeType.LABEL: return this.assembler.getLabelValue(node.label);
@@ -30,6 +30,7 @@ export class ExpressionHandler {
     switch(operator) {
       case UnaryOperator.INVERT: return ~this.assembler.checkNumber(value);
       case UnaryOperator.NOT: return value === 0 ? 1 : 0;
+      case UnaryOperator.LOGIC: return value === 0 ? 0 : 1;
       case UnaryOperator.NEGATE: return -this.assembler.checkNumber(value);
       case UnaryOperator.NOP: return value;
       case UnaryOperator.LOBYTE: return this.assembler.checkNumber(value) & 0xff;

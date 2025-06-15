@@ -96,6 +96,7 @@ export function createSpc700Map(): OpcodeMap {
   addImpli(map, "mov", /^\(x\+\),a$/i, 0xaf);
   addImpli(map, "mov", /^a,\(x\+\)$/i, 0xbf);
   addImpli(map, "mov", regXind, 0xe6);
+  addImpli(map, "mov", /^\(x\),a$/i, 0xc6);
   addGener(map, "mov", regImmi, 0xe8, AdrMode.IMM8);
   addDpage(map, "mov", regIndX, 0xe7);
   addDpage(map, "mov", regIndY, 0xf7);
@@ -108,7 +109,6 @@ export function createSpc700Map(): OpcodeMap {
   addGener(map, "mov", /^y,#(.+)$/i, 0x8d, AdrMode.IMM8);
   addDpage(map, "mov", /^y,(.+)\+x$/i, 0xfb);
   addDpAbs(map, "mov", /^y,(.+)$/i, 0xeb, 0xec);
-  addImpli(map, "mov", /^\(x\),a$/i, 0xc6);
   addDpage(map, "mov", /^\((.+)\+x\),a$/i, 0xc7);
   addDpage(map, "mov", /^\((.+)\)\+y,a$/i, 0xd7);
   addDpAbs(map, "mov", /^(.+)\+x,a$/i, 0xd4, 0xd5);
@@ -196,8 +196,8 @@ export function createSpc700Map(): OpcodeMap {
   addGener(map, "beq", rmwAdrs, 0xf0, AdrMode.REL8);
 
   addImpli(map, "nop", regImpl, 0x00);
-  addImpli(map, "clrp", regImpl, 0x20);
-  addImpli(map, "setp", regImpl, 0x40);
+  addImpli(map, "clrp", regImpl, 0x20, SpecialOp.CLRP);
+  addImpli(map, "setp", regImpl, 0x40, SpecialOp.SETP);
   addImpli(map, "clrc", regImpl, 0x60);
   addImpli(map, "setc", regImpl, 0x80);
   addImpli(map, "ei", regImpl, 0xa0);
@@ -228,8 +228,8 @@ export function createSpc700Map(): OpcodeMap {
   return map;
 }
 
-function addImpli(map: OpcodeMap, opcode: string, regex: RegExp, val: number): void {
-  addItem(map, opcode, {regex, adrs: [], vals: [val], argMap: [-1]});
+function addImpli(map: OpcodeMap, opcode: string, regex: RegExp, val: number, spc?: SpecialOp): void {
+  addItem(map, opcode, {regex, adrs: [], vals: [val], argMap: [-1], spc});
 }
 
 function addGener(map: OpcodeMap, opcode: string, regex: RegExp, val: number, mode: AdrMode): void {

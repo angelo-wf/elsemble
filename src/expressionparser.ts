@@ -25,6 +25,7 @@ export enum BinaryOperator {
 export enum UnaryOperator {
   INVERT = "~",
   NOT = "!",
+  LOGIC = "?",
   NOP = "+",
   NEGATE = "-",
   LOBYTE = "<",
@@ -63,6 +64,7 @@ const binaryOps: {[key in BinaryOperator]: OperatorInfo<key>} = {
 const UnaryOps: {[key in UnaryOperator]: OperatorInfo<key>} = {
   [UnaryOperator.INVERT]: {op: UnaryOperator.INVERT, level: 0},
   [UnaryOperator.NOT]: {op: UnaryOperator.NOT, level: 0},
+  [UnaryOperator.LOGIC]: {op: UnaryOperator.LOGIC, level: 0},
   [UnaryOperator.NOP]: {op: UnaryOperator.NOP, level: 0},
   [UnaryOperator.NEGATE]: {op: UnaryOperator.NEGATE, level: 0},
   [UnaryOperator.LOBYTE]: {op: UnaryOperator.LOBYTE, level: 0},
