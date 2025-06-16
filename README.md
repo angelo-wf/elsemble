@@ -2,7 +2,7 @@
 
 A multipass assembler (currently) supporting the 6502 (documented opcodes only), 65816 and spc700, written in Typescript.
 
-## Compile and run
+## Compilng and running
 
 Requires `node` and `npm`
 
@@ -14,10 +14,12 @@ Requires `node` and `npm`
 
 See `DOC.md`
 
+Note that the exact syntax is not fully finalized and may change.
+
 ## Future work
 
 - Proper path handling (e.g. current solution is not fully functional on Windows)
-- Tokenisation of argument strings before parsing (and move opcode parsing away from current regexp-approach)
+- Tokenisation of argument strings before parsing (move opcode parsing away from current regexp-approach), and general parsing improvements
 - Functions (e.g. `min`, `strlen`, `select`, `slice`, `dec`)
 - Dynamic label definition to/from string (`.define "name", 12`, `lbl("name")`)
 - Anonymous labels? (`:`, can be referred to with `:+[+...]`, `:-[-...]`)
