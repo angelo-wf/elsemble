@@ -24,13 +24,13 @@ Short options that do not need arguments can be defined with one dash (e.g. `-ev
 
 `-d`/`--define` can be used multiple times to set multiple labels. For other options the last given value applies.
 
-Input files are strictly read as UTF-8, and textual output written as UTF-8.
+Assembly files are strictly read as UTF-8, and textual output written as UTF-8.
 
 ## Syntax
 
 Each assembly file is parsed line by line. Each line can be an assignment, an optionally labeled opcode, directive or macro, or just a optionally labeled empty line. `;` can be used for comments.
 
-Assignments are in the form `label = value` for a regular label, or `label := value` for a re-assignable label.
+Assignments are in the form `label = value` for a regular label, or `label := value` for a redefinable label.
 
 Directives start with a dot, and macro calls with an exclamation mark. They are followed by 0 or more arguments, separated by a comma. Macros need to be defined before use.
 
@@ -44,11 +44,11 @@ Opcodes and directives are not case-sensitive, but macros and labels are.
 
 Labels can have numeric (integer) values, or string values. Labels defined using a labeled line get the value of the PC, and labels through assignment the given value.
 
-Labels can normally not be redefined, but when assigned using the re-assignment syntax, they can be. All (re-)assignments need to use the re-assignment syntax. Unlike non-redefinable labels, they need to be defined before use.
+Labels can normally not be redefined, but when assigned using the redefinition-syntax, they can be. All (re-)definitions need to use the redefinition-syntax. Unlike non-redefinable labels, they need to be defined before use.
 
 There are several kinds of labels:
 - Regular global labels, which just have a alphanumeric name (`global`).
-- Local labels, which are a alphanumeric name preceded by a dot (`.local`). These are only directly usable between the (scoped) global labels they are defined. Outside of this section, the global name (and scope) can be prepended to reference it (`global.local`).
+- Local labels, which are a alphanumeric name preceded by a dot (`.local`). These are only directly usable between the global labels they are defined. Outside of this section, the global name can be prepended to reference it (`global.local`).
 - Scoped labels, which are a `global` or `global.local` label preceded by an alphanumeric scope name and a colon (`scope:global.local`).
 - Default scoped labels, which are `global` and `global.local` labels with just a preceding colon (`:global.local`). These are explicitly in the default scope.
 - Block labels, alphanumeric preceded by a `@`, which can be used in repeat statements and macros (`@block`). They are unique to each loop through the repeat or each macro expansion. They are also used for the repeat counter and macro arguments.
@@ -136,7 +136,7 @@ Macros can be defined:
 
 Block-labels can be defined within a repeat statement and are unique per macro call.
 
-Macros cannot be defined within other macros.
+Macros cannot be defined within other macros and cannot be redefined.
 
 ### Conditional assembly
 
@@ -171,7 +171,7 @@ Files containing assembly, or data from binary files can be included:
 - `.include <path>`: Includes the file at `path` as assembly.
 - `.incbin <path>, [start], [count]`: Include binary data from the file at `path`. If `start` and `count` are privided, only includes `count` bytes starting from `start`. If count is omitted, goes to the end of the file. If both are omitted, includes the whole file.
 
-absolute paths (starting with `/`) work as expected. Paths starting with `./` are resolved as being relative to the working directory, other paths are relative to the including file. Includes within macros are relative to the file that defines the macro, not the file calling it.
+Absolute paths (starting with `/`) work as expected. Paths starting with `./` are resolved as being relative to the working directory, other paths are relative to the including file. Includes within macros are relative to the file that defines the macro, not the file calling it.
 
 ### Setting and moving the PC
 
@@ -197,7 +197,7 @@ Data can be defined:
 - `.dw <value>, [value, ...]`: Emit the given values as 16-bit words, or for string arguments, emits each character of the string using the current character mapping (with range-check).
 - `.dl <value>, [value, ...]`: Emit the given values as 24-bit longs, or for string arguments, emits each character of the string using the current character mapping (with range-check).
 
-Range checks check if the value is in the range for the needed bit-size, allowing both interpeting as signed or unsigned (e.g. for 8-bit values, -128 to 255 are valid).
+Range checks check if the value is in the range for the needed bit-size, allowing both interpreting as signed or unsigned (e.g. for 8-bit values, -128 to 255 are valid).
 
 Defining data with automatic byte/word extraction can also be done:
 
@@ -226,7 +226,7 @@ The current scope used for non-scoped labels can be set:
 
 The current architecture and options relating to architectures can be set:
 
-- `.arch <name>`: Set the architecture to `name`. NOTE: this cannot be done in if-statements or macros. Additionally, `.arch` inside an included file does not affect the architecture of the including file.
+- `.arch <name>`: Set the architecture to `name`. This cannot be done inside if-statements or macros. Additionally, `.arch` inside an included file does not affect the architecture of the including file.
 - `.smart <name>`: Enable or disable smart mode, which allows some architecture settings to be set by certain opcodes being assembled. `name` needs to be 'on' or 'off'.
 
 Additionally, some architecture-specific directives exist, which are listed in the section about each architecture. These values are set per architecture and not shared between them.
@@ -241,7 +241,8 @@ The following architectures are valid:
 ### MOS 6502
 
 The assembler follows the general conventions for 6502 syntax. The following things are of note:
-- The assembler uses the optimal form for opcodes with both zeropage and absolute forms. A `.a` postfix on the opcode can be used to force absolute addressing when zeropage would otherwise be used.
+- The assembler uses the optimal form for opcodes with both zeropage and absolute forms.
+  - A `.a` postfix on the opcode can be used to force absolute addressing when zeropage would otherwise be used.
 - The `a` for accumulator addressing is optional (`lsr a` and `lsr` are equivalent).
 - `brk` has an optional immediate argument. If provided, it is assembled as a 2-byte opcode using the argument instead of an one-byte opcode.
 
@@ -251,7 +252,7 @@ The assembler follows the general conventions for 65816 syntax. The following th
 - The assembler has a address resolution system to allow the most optimal form for opcodes with multiple forms. Some postfixes on opcodes are available:
   - For direct-page opcodes, `.b` can be used to ignore address resolution and just use the argument as an 8-bit value to use.
   - For absoulte opcodes, `.w` can be used to ignore address resolution and just use the argument as an 16-bit value to use.
-  - For opcodes with both direct page and absoulte forms, `.a` can be used to ignore the direct-page possibility, but still check that absolute is possible (and use it).
+  - For opcodes with both direct page and absoulte forms, `.a` can be used to ignore the direct-page possibility, but still check and use absolute addressing.
   - For opcodes with DP, absolute and long forms, `.l` can be used to force long addressing.
 - Opcodes that take an immediate based on regiser size can use `.b` and `.w` to force the size used.
 - The `a` for accumulator addressing is optional (`dec a` and `dec` are equivalent).
@@ -260,7 +261,7 @@ The assembler follows the general conventions for 65816 syntax. The following th
 - `wdm` has an immediate argument.
 - `mvn` and `mvp` take banks in source, destination order, and do not use an immediate-`#`.
 
-Some directives exist to handle address resolution:
+Some directives exist to handle immediates and address resolution:
 
 - `.asize <val>`: Set the size the assembler uses for accumulator-based immediate arguments. The value has to be 8 or 16. It only sets internal state, and does not emit any opcodes to switch the size.
 - `.isize <val>`: Set the size the assembler uses for index-based immediate arguments. The value has to be 8 or 16. It does not emit any opcodes.
@@ -279,7 +280,9 @@ When smart mode is enabled, the internal state of the accumulator and index size
 ### SPC700
 
 The assemnler roughly uses the specified opcode formats, but does deviate in some places:
-- The `!` to indicate absolute does not exists, instead the most optimal form is used for opcodes with both DP and absolute fotms. A `.a` postfix on the opcode can be used to force absolute addressing, or `.b` to ignore address resolution for 8-bit values.
+- The `!` to indicate absolute does not exists, instead the most optimal form is used for opcodes with both DP and absolute forms.
+  - A `.a` postfix on opcodoes with DP and absolute forms can be used to force absolute addressing.
+  - A `.b` postfix on DP-opcodes can be used to ignore address resolution and just use the argument as an 8-bit value.
 - Round brackets `()` are consistently used for indirection.
 - Post-increment puts the `+` within the brackets (`(x+)`).
 - Bit-opcodes use a comma between the value and the bit (`set1 $12,3`, `and1 c, /$1234,4`) and not a dot.

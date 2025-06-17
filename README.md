@@ -6,13 +6,15 @@ A multipass assembler (currently) supporting the 6502 (documented opcodes only),
 
 Requires `node` and `npm`
 
+Compile:
 - `npm install`
 - `npm run tsc`
+Run:
 - `node build/main.js`
 
 ## Documentation
 
-See `DOC.md`
+See `DOC.md` for CLI arguments and assembly syntax/directves.
 
 Note that the exact syntax is not fully finalized and may change.
 
@@ -22,5 +24,7 @@ Note that the exact syntax is not fully finalized and may change.
 - Tokenisation of argument strings before parsing (move opcode parsing away from current regexp-approach), and general parsing improvements
 - Functions (e.g. `min`, `strlen`, `select`, `slice`, `dec`)
 - Dynamic label definition to/from string (`.define "name", 12`, `lbl("name")`)
+- Tests
+- More directives? (e.g. while loops?)
 - Anonymous labels? (`:`, can be referred to with `:+[+...]`, `:-[-...]`)
 - Custom functions? (`.function myFunc 2 \1*\2`, `%myFunc(3, 4)`)
