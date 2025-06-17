@@ -2,8 +2,12 @@ import { checkLabel, ParserError } from "./lineparser.js";
 import { Architecture, parseArchitecture } from "./opcodes.js";
 
 export class ArgumentError extends Error {
-  constructor(message: string, options?: ErrorOptions) {
+  
+  helpRequested: boolean;
+
+  constructor(message: string, helpRequested?: boolean, options?: ErrorOptions) {
     super(message, options);
+    this.helpRequested = helpRequested ?? false;
   }
 }
 
@@ -112,7 +116,7 @@ export function parseArguments(args: string[]): Arguments {
     }
   }
   if(positional !== positionalOptions.length) {
-    throw new ArgumentError("Not enough arguments");
+    throw new ArgumentError("Not enough arguments", positional == 0 ? parsed.help : false);
   }
   return parsed;
 }

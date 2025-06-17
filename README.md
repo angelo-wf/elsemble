@@ -9,6 +9,7 @@ Requires `node` and `npm`
 Compile:
 - `npm install`
 - `npm run tsc`
+
 Run:
 - `node build/main.js`
 
@@ -22,9 +23,10 @@ Note that the exact syntax is not fully finalized and may change.
 
 - Proper path handling (e.g. current solution is not fully functional on Windows)
 - Tokenisation of argument strings before parsing (move opcode parsing away from current regexp-approach), and general parsing improvements
-- Functions (e.g. `min`, `strlen`, `select`, `slice`, `dec`)
+- Functions (e.g. `min`, `strlen`, `select`, `slice`, `dec`, `asize`)
 - Dynamic label definition to/from string (`.define "name", 12`, `lbl("name")`)
 - Tests
+- Allow running easier
 - More directives? (e.g. while loops?)
 - Anonymous labels? (`:`, can be referred to with `:+[+...]`, `:-[-...]`)
 - Custom functions? (`.function myFunc 2 \1*\2`, `%myFunc(3, 4)`)

@@ -7,8 +7,13 @@ try {
   args = parseArguments(process.argv.slice(2));
 } catch(e) {
   if(e instanceof ArgumentError) {
-    console.error(e.message);
-    process.exit(1);
+    if(e.helpRequested) {
+      console.log(getHelp());
+      process.exit(0);
+    } else {
+      console.error(e.message);
+      process.exit(1);
+    }
   } else {
     throw e;
   }
