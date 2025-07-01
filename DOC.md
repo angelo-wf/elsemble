@@ -171,7 +171,7 @@ Files containing assembly, or data from binary files can be included:
 - `.include <path>`: Includes the file at `path` as assembly.
 - `.incbin <path>, [start], [count]`: Include binary data from the file at `path`. If `start` and `count` are privided, only includes `count` bytes starting from `start`. If count is omitted, goes to the end of the file. If both are omitted, includes the whole file.
 
-Absolute paths (starting with `/`) work as expected. Paths starting with `./` are resolved as being relative to the working directory, other paths are relative to the including file. Includes within macros are relative to the file that defines the macro, not the file calling it.
+Absolute paths (starting with `/` (optionally preceded by a drive letter + colon)) work as expected. Paths starting with `./` are resolved as being relative to the working directory, other paths are relative to the including file. Includes within macros are relative to the file that defines the macro, not the file calling it. Paths should always use forward slashes, even on Windows.
 
 ### Setting and moving the PC
 

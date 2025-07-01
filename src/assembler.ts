@@ -148,7 +148,7 @@ export class Assembler {
     this.pc = 0;
     this.fillByte = 0;
     // handle input file (as if include)
-    this.handleFile(this.arguments.inputFile, this.arguments.arch);
+    this.handleFile(this.readHandler.getPath(this.arguments.inputFile, ""), this.arguments.arch);
     // check that no items (if, macro, etc) were left open
     if(this.flowStack.length > 1) {
       this.logError(`Unclosed ${this.flowStack.at(-1)!.type === FlowType.IF ? ".if" : ".repeat"} statement`);

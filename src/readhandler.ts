@@ -77,8 +77,12 @@ export class ReadHandler {
 
   // given a new path and a current path, gives a cwd-relative path
   getPath(path: string, prevPath: string): string {
+    if(path.includes("\\")) {
+      this.assembler.logError("Unexpected backslash in path, use forward slashes instead");
+      return path;
+    }
     if(path === "") return "";
-    if(path.startsWith("/")) return path;
+    if(path.startsWith("/") || /^[A-Z]:\//.test(path)) return path;
     if(path.startsWith("./")) return path.slice(2);
     let prevIndex = prevPath.lastIndexOf("/");
     let prefDir = prevIndex >= 0 ? prevPath.slice(0, prevIndex + 1) : "";

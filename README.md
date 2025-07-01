@@ -21,7 +21,6 @@ Note that the exact syntax is not fully finalized and may change.
 
 ## Future work
 
-- Proper path handling (e.g. current solution is not fully functional on Windows)
 - Tokenisation of argument strings before parsing (move opcode parsing away from current regexp-approach), and general parsing improvements
 - Functions (e.g. `min`, `strlen`, `select`, `slice`, `dec`, `asize`)
 - Dynamic label definition to/from string (`.define "name", 12`, `lbl("name")`)
