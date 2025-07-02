@@ -87,7 +87,7 @@ A selection of binary and unary operators, as well as brackets (`()`) to force p
 
 | Unary operator | description |
 | - | - |
-| `~` | Bitwise not (invert bits) |
+| `~` | Bitwise not (invert bits, flips sign as consequence) |
 | `+` | Unary plus, a no-op |
 | `-` | Negation |
 | `!` | Logical not, 1 if the value is `0`, else 0 |

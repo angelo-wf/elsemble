@@ -1,0 +1,788 @@
+       0                
+       0                ; test file, checked for correct assembly, has to match given listing, symbols and output
+       0                
+       0                ; arcitecture tests
+       0                
+       0 12 24          .db $12, $24 ; (emitting) directive before .arch is allowed
+       2                
+       2                .include "arch/m6502.s"
+       2                
+       2                .arch m6502
+       2                .org 0
+       0                
+       0 00 12          brk #$12
+       2 10 12          bpl * + $14
+       4 20 34 12       jsr $1234
+       7 30 12          bmi * + $14
+       9 40             rti
+       a 50 12          bvc * + $14
+       c 60             rts
+       d 70 12          bvs * + $14
+       f 90 12          bcc * + $14
+      11 a0 12          ldy #$12
+      13 b0 12          bcs * + $14
+      15 c0 12          cpy #$12
+      17 d0 12          bne * + $14
+      19 e0 12          cpx #$12
+      1b f0 12          beq * + $14
+      1d                
+      1d 01 12          ora ($12, x)
+      1f 11 12          ora ($12), y
+      21 21 12          and ($12, x)
+      23 31 12          and ($12), y
+      25 41 12          eor ($12, x)
+      27 51 12          eor ($12), y
+      29 61 12          adc ($12, x)
+      2b 71 12          adc ($12), y
+      2d 81 12          sta ($12, x)
+      2f 91 12          sta ($12), y
+      31 a1 12          lda ($12, x)
+      33 b1 12          lda ($12), y
+      35 c1 12          cmp ($12, x)
+      37 d1 12          cmp ($12), y
+      39 e1 12          sbc ($12, x)
+      3b f1 12          sbc ($12), y
+      3d                
+      3d a2 12          ldx #$12
+      3f                
+      3f 24 12          bit $12
+      41 84 12          sty $12
+      43 94 12          sty $12, x
+      45 a4 12          ldy $12
+      47 b4 12          ldy $12, x
+      49 c4 12          cpy $12
+      4b e4 12          cpx $12
+      4d                
+      4d 05 12          ora $12
+      4f 15 12          ora $12, x
+      51 25 12          and $12
+      53 35 12          and $12, x
+      55 45 12          eor $12
+      57 55 12          eor $12, x
+      59 65 12          adc $12
+      5b 75 12          adc $12, x
+      5d 85 12          sta $12
+      5f 95 12          sta $12, x
+      61 a5 12          lda $12
+      63 b5 12          lda $12, x
+      65 c5 12          cmp $12
+      67 d5 12          cmp $12, x
+      69 e5 12          sbc $12
+      6b f5 12          sbc $12, x
+      6d                
+      6d 06 12          asl $12
+      6f 16 12          asl $12, x
+      71 26 12          rol $12
+      73 36 12          rol $12, x
+      75 46 12          lsr $12
+      77 56 12          lsr $12, x
+      79 66 12          ror $12
+      7b 76 12          ror $12, x
+      7d 86 12          stx $12
+      7f 96 12          stx $12, y
+      81 a6 12          ldx $12
+      83 b6 12          ldx $12, y
+      85 c6 12          dec $12
+      87 d6 12          dec $12, x
+      89 e6 12          inc $12
+      8b f6 12          inc $12, x
+      8d                
+      8d 08             php
+      8e 18             clc
+      8f 28             plp
+      90 38             sec
+      91 48             pha
+      92 58             cli
+      93 68             pla
+      94 78             sei
+      95 88             dey
+      96 98             tya
+      97 a8             tay
+      98 b8             clv
+      99 c8             iny
+      9a d8             cld
+      9b e8             inx
+      9c f8             sed
+      9d                
+      9d 09 12          ora #$12
+      9f 19 34 12       ora $1234, y
+      a2 29 12          and #$12
+      a4 39 34 12       and $1234, y
+      a7 49 12          eor #$12
+      a9 59 34 12       eor $1234, y
+      ac 69 12          adc #$12
+      ae 79 34 12       adc $1234, y
+      b1 99 34 12       sta $1234, y
+      b4 a9 12          lda #$12
+      b6 b9 34 12       lda $1234, y
+      b9 c9 12          cmp #$12
+      bb d9 34 12       cmp $1234, y
+      be e9 12          sbc #$12
+      c0 f9 34 12       sbc $1234, y
+      c3                
+      c3 0a             asl
+      c4 2a             rol
+      c5 4a             lsr
+      c6 6a             ror
+      c7 8a             txa
+      c8 9a             txs
+      c9 aa             tax
+      ca ba             tsx
+      cb ca             dex
+      cc ea             nop
+      cd                
+      cd 2c 34 12       bit $1234
+      d0 4c 34 12       jmp $1234
+      d3 6c 34 12       jmp ($1234)
+      d6 8c 34 12       sty $1234
+      d9 ac 34 12       ldy $1234
+      dc bc 34 12       ldy $1234, x
+      df cc 34 12       cpy $1234
+      e2 ec 34 12       cpx $1234
+      e5                
+      e5 0d 34 12       ora $1234
+      e8 1d 34 12       ora $1234, x
+      eb 2d 34 12       and $1234
+      ee 3d 34 12       and $1234, x
+      f1 4d 34 12       eor $1234
+      f4 5d 34 12       eor $1234, x
+      f7 6d 34 12       adc $1234
+      fa 7d 34 12       adc $1234, x
+      fd 8d 34 12       sta $1234
+     100 9d 34 12       sta $1234, x
+     103 ad 34 12       lda $1234
+     106 bd 34 12       lda $1234, x
+     109 cd 34 12       cmp $1234
+     10c dd 34 12       cmp $1234, x
+     10f ed 34 12       sbc $1234
+     112 fd 34 12       sbc $1234, x
+     115                
+     115 0e 34 12       asl $1234
+     118 1e 34 12       asl $1234, x
+     11b 2e 34 12       rol $1234
+     11e 3e 34 12       rol $1234, x
+     121 4e 34 12       lsr $1234
+     124 5e 34 12       lsr $1234, x
+     127 6e 34 12       ror $1234
+     12a 7e 34 12       ror $1234, x
+     12d 8e 34 12       stx $1234
+     130 ae 34 12       ldx $1234
+     133 be 34 12       ldx $1234, y
+     136 ce 34 12       dec $1234
+     139 de 34 12       dec $1234, x
+     13c ee 34 12       inc $1234
+     13f fe 34 12       inc $1234, x
+     142                
+     142                .include "arch/w65816.s"
+     142                
+     142                .arch w65816
+     142                .org 0
+       0                
+       0 00 12          brk #$12
+       2 10 12          bpl * + $14
+       4 20 34 12       jsr $1234
+       7 30 12          bmi * + $14
+       9 40             rti
+       a 50 12          bvc * + $14
+       c 60             rts
+       d 70 12          bvs * + $14
+       f 80 12          bra * + $14
+      11 90 12          bcc * + $14
+      13 a0 12          ldy #$12
+      15 b0 12          bcs * + $14
+      17 c0 12          cpy #$12
+      19 d0 12          bne * + $14
+      1b e0 12          cpx #$12
+      1d f0 12          beq * + $14
+      1f                
+      1f 01 12          ora ($12, x)
+      21 11 12          ora ($12), y
+      23 21 12          and ($12, x)
+      25 31 12          and ($12), y
+      27 41 12          eor ($12, x)
+      29 51 12          eor ($12), y
+      2b 61 12          adc ($12, x)
+      2d 71 12          adc ($12), y
+      2f 81 12          sta ($12, x)
+      31 91 12          sta ($12), y
+      33 a1 12          lda ($12, x)
+      35 b1 12          lda ($12), y
+      37 c1 12          cmp ($12, x)
+      39 d1 12          cmp ($12), y
+      3b e1 12          sbc ($12, x)
+      3d f1 12          sbc ($12), y
+      3f                
+      3f 02 12          cop #$12
+      41 12 12          ora ($12)
+      43 22 56 34 12    jsl $123456
+      47 32 12          and ($12)
+      49 42 12          wdm #$12
+      4b 52 12          eor ($12)
+      4d 62 34 12       per * + $1237
+      50 72 12          adc ($12)
+      52 82 34 12       brl * + $1237
+      55 92 12          sta ($12)
+      57 a2 12          ldx #$12
+      59 b2 12          lda ($12)
+      5b c2 12          rep #$12
+      5d d2 12          cmp ($12)
+      5f e2 12          sep #$12
+      61 f2 12          sbc ($12)
+      63                
+      63 03 12          ora $12, s
+      65 13 12          ora ($12, s), y
+      67 23 12          and $12, s
+      69 33 12          and ($12, s), y
+      6b 43 12          eor $12, s
+      6d 53 12          eor ($12, s), y
+      6f 63 12          adc $12, s
+      71 73 12          adc ($12, s), y
+      73 83 12          sta $12, s
+      75 93 12          sta ($12, s), y
+      77 a3 12          lda $12, s
+      79 b3 12          lda ($12, s), y
+      7b c3 12          cmp $12, s
+      7d d3 12          cmp ($12, s), y
+      7f e3 12          sbc $12, s
+      81 f3 12          sbc ($12, s), y
+      83                
+      83 04 12          tsb $12
+      85 14 12          trb $12
+      87 24 12          bit $12
+      89 34 12          bit $12, x
+      8b 44 34 12       mvp $12, $34
+      8e 54 34 12       mvn $12, $34
+      91 64 12          stz $12
+      93 74 12          stz $12, x
+      95 84 12          sty $12
+      97 94 12          sty $12, x
+      99 a4 12          ldy $12
+      9b b4 12          ldy $12, x
+      9d c4 12          cpy $12
+      9f d4 12          pei ($12)
+      a1 e4 12          cpx $12
+      a3 f4 34 12       pea $1234
+      a6                
+      a6 05 12          ora $12
+      a8 15 12          ora $12, x
+      aa 25 12          and $12
+      ac 35 12          and $12, x
+      ae 45 12          eor $12
+      b0 55 12          eor $12, x
+      b2 65 12          adc $12
+      b4 75 12          adc $12, x
+      b6 85 12          sta $12
+      b8 95 12          sta $12, x
+      ba a5 12          lda $12
+      bc b5 12          lda $12, x
+      be c5 12          cmp $12
+      c0 d5 12          cmp $12, x
+      c2 e5 12          sbc $12
+      c4 f5 12          sbc $12, x
+      c6                
+      c6 06 12          asl $12
+      c8 16 12          asl $12, x
+      ca 26 12          rol $12
+      cc 36 12          rol $12, x
+      ce 46 12          lsr $12
+      d0 56 12          lsr $12, x
+      d2 66 12          ror $12
+      d4 76 12          ror $12, x
+      d6 86 12          stx $12
+      d8 96 12          stx $12, y
+      da a6 12          ldx $12
+      dc b6 12          ldx $12, y
+      de c6 12          dec $12
+      e0 d6 12          dec $12, x
+      e2 e6 12          inc $12
+      e4 f6 12          inc $12, x
+      e6                
+      e6 07 12          ora [$12]
+      e8 17 12          ora [$12], y
+      ea 27 12          and [$12]
+      ec 37 12          and [$12], y
+      ee 47 12          eor [$12]
+      f0 57 12          eor [$12], y
+      f2 67 12          adc [$12]
+      f4 77 12          adc [$12], y
+      f6 87 12          sta [$12]
+      f8 97 12          sta [$12], y
+      fa a7 12          lda [$12]
+      fc b7 12          lda [$12], y
+      fe c7 12          cmp [$12]
+     100 d7 12          cmp [$12], y
+     102 e7 12          sbc [$12]
+     104 f7 12          sbc [$12], y
+     106                
+     106 08             php
+     107 18             clc
+     108 28             plp
+     109 38             sec
+     10a 48             pha
+     10b 58             cli
+     10c 68             pla
+     10d 78             sei
+     10e 88             dey
+     10f 98             tya
+     110 a8             tay
+     111 b8             clv
+     112 c8             iny
+     113 d8             cld
+     114 e8             inx
+     115 f8             sed
+     116                
+     116 09 12          ora #$12
+     118 19 34 12       ora $1234, y
+     11b 29 12          and #$12
+     11d 39 34 12       and $1234, y
+     120 49 12          eor #$12
+     122 59 34 12       eor $1234, y
+     125 69 12          adc #$12
+     127 79 34 12       adc $1234, y
+     12a 89 12          bit #$12
+     12c 99 34 12       sta $1234, y
+     12f a9 12          lda #$12
+     131 b9 34 12       lda $1234, y
+     134 c9 12          cmp #$12
+     136 d9 34 12       cmp $1234, y
+     139 e9 12          sbc #$12
+     13b f9 34 12       sbc $1234, y
+     13e                
+     13e 0a             asl
+     13f 1a             inc
+     140 2a             rol
+     141 3a             dec
+     142 4a             lsr
+     143 5a             phy
+     144 6a             ror
+     145 7a             ply
+     146 8a             txa
+     147 9a             txs
+     148 aa             tax
+     149 ba             tsx
+     14a ca             dex
+     14b da             phx
+     14c ea             nop
+     14d fa             plx
+     14e                
+     14e 0b             phd
+     14f 1b             tcs
+     150 2b             pld
+     151 3b             tsc
+     152 4b             phk
+     153 5b             tcd
+     154 6b             rtl
+     155 7b             tdc
+     156 8b             phb
+     157 9b             txy
+     158 ab             plb
+     159 bb             tyx
+     15a cb             wai
+     15b db             stp
+     15c eb             xba
+     15d fb             xce
+     15e                
+     15e 0c 34 12       tsb $1234
+     161 1c 34 12       trb $1234
+     164 2c 34 12       bit $1234
+     167 3c 34 12       bit $1234, x
+     16a 4c 34 12       jmp $1234
+     16d 5c 56 34 12    jml $123456
+     171 6c 34 12       jmp ($1234)
+     174 7c 34 12       jmp ($1234, x)
+     177 8c 34 12       sty $1234
+     17a 9c 34 12       stz $1234
+     17d ac 34 12       ldy $1234
+     180 bc 34 12       ldy $1234, x
+     183 cc 34 12       cpy $1234
+     186 dc 34 12       jml [$1234]
+     189 ec 34 12       cpx $1234
+     18c fc 34 12       jsr ($1234, x)
+     18f                
+     18f 0d 34 12       ora $1234
+     192 1d 34 12       ora $1234, x
+     195 2d 34 12       and $1234
+     198 3d 34 12       and $1234, x
+     19b 4d 34 12       eor $1234
+     19e 5d 34 12       eor $1234, x
+     1a1 6d 34 12       adc $1234
+     1a4 7d 34 12       adc $1234, x
+     1a7 8d 34 12       sta $1234
+     1aa 9d 34 12       sta $1234, x
+     1ad ad 34 12       lda $1234
+     1b0 bd 34 12       lda $1234, x
+     1b3 cd 34 12       cmp $1234
+     1b6 dd 34 12       cmp $1234, x
+     1b9 ed 34 12       sbc $1234
+     1bc fd 34 12       sbc $1234, x
+     1bf                
+     1bf 0e 34 12       asl $1234
+     1c2 1e 34 12       asl $1234, x
+     1c5 2e 34 12       rol $1234
+     1c8 3e 34 12       rol $1234, x
+     1cb 4e 34 12       lsr $1234
+     1ce 5e 34 12       lsr $1234, x
+     1d1 6e 34 12       ror $1234
+     1d4 7e 34 12       ror $1234, x
+     1d7 8e 34 12       stx $1234
+     1da 9e 34 12       stz $1234, x
+     1dd ae 34 12       ldx $1234
+     1e0 be 34 12       ldx $1234, y
+     1e3 ce 34 12       dec $1234
+     1e6 de 34 12       dec $1234, x
+     1e9 ee 34 12       inc $1234
+     1ec fe 34 12       inc $1234, x
+     1ef                
+     1ef 0f 56 34 12    ora $123456
+     1f3 1f 56 34 12    ora $123456, x
+     1f7 2f 56 34 12    and $123456
+     1fb 3f 56 34 12    and $123456, x
+     1ff 4f 56 34 12    eor $123456
+     203 5f 56 34 12    eor $123456, x
+     207 6f 56 34 12    adc $123456
+     20b 7f 56 34 12    adc $123456, x
+     20f 8f 56 34 12    sta $123456
+     213 9f 56 34 12    sta $123456, x
+     217 af 56 34 12    lda $123456
+     21b bf 56 34 12    lda $123456, x
+     21f cf 56 34 12    cmp $123456
+     223 df 56 34 12    cmp $123456, x
+     227 ef 56 34 12    sbc $123456
+     22b ff 56 34 12    sbc $123456, x
+     22f                
+     22f                .include "arch/spc700.s"
+     22f                
+     22f                .arch spc700
+     22f                .org 0
+       0                
+       0 00             nop
+       1 10 12          bpl * + $14
+       3 20             clrp
+       4 30 12          bmi * + $14
+       6 40             setp
+       7 50 12          bvc * + $14
+       9 60             clrc
+       a 70 12          bvs * + $14
+       c 80             setc
+       d 90 12          bcc * + $14
+       f a0             ei
+      10 b0 12          bcs * + $14
+      12 c0             di
+      13 d0 12          bne * + $14
+      15 e0             clrv
+      16 f0 12          beq * + $14
+      18                
+      18 01             tcall 0
+      19 11             tcall 1
+      1a 21             tcall 2
+      1b 31             tcall 3
+      1c 41             tcall 4
+      1d 51             tcall 5
+      1e 61             tcall 6
+      1f 71             tcall 7
+      20 81             tcall 8
+      21 91             tcall 9
+      22 a1             tcall 10
+      23 b1             tcall 11
+      24 c1             tcall 12
+      25 d1             tcall 13
+      26 e1             tcall 14
+      27 f1             tcall 15
+      28                
+      28 02 12          set1 $12,0
+      2a 12 12          clr1 $12,0
+      2c 22 12          set1 $12,1
+      2e 32 12          clr1 $12,1
+      30 42 12          set1 $12,2
+      32 52 12          clr1 $12,2
+      34 62 12          set1 $12,3
+      36 72 12          clr1 $12,3
+      38 82 12          set1 $12,4
+      3a 92 12          clr1 $12,4
+      3c a2 12          set1 $12,5
+      3e b2 12          clr1 $12,5
+      40 c2 12          set1 $12,6
+      42 d2 12          clr1 $12,6
+      44 e2 12          set1 $12,7
+      46 f2 12          clr1 $12,7
+      48                
+      48 03 12 34       bbs $12,0, * + $37
+      4b 13 12 34       bbc $12,0, * + $37
+      4e 23 12 34       bbs $12,1, * + $37
+      51 33 12 34       bbc $12,1, * + $37
+      54 43 12 34       bbs $12,2, * + $37
+      57 53 12 34       bbc $12,2, * + $37
+      5a 63 12 34       bbs $12,3, * + $37
+      5d 73 12 34       bbc $12,3, * + $37
+      60 83 12 34       bbs $12,4, * + $37
+      63 93 12 34       bbc $12,4, * + $37
+      66 a3 12 34       bbs $12,5, * + $37
+      69 b3 12 34       bbc $12,5, * + $37
+      6c c3 12 34       bbs $12,6, * + $37
+      6f d3 12 34       bbc $12,6, * + $37
+      72 e3 12 34       bbs $12,7, * + $37
+      75 f3 12 34       bbc $12,7, * + $37
+      78                
+      78 04 12          or a, $12
+      7a 05 34 12       or a, $1234
+      7d 06             or a, (x)
+      7e 07 12          or a, ($12 + x)
+      80 08 12          or a, #$12
+      82 09 34 12       or $12, $34
+      85 14 12          or a, $12 + x
+      87 15 34 12       or a, $1234 + x
+      8a 16 34 12       or a, $1234 + y
+      8d 17 12          or a, ($12) + y
+      8f 18 34 12       or $12, #$34
+      92 19             or (x), (y)
+      93                
+      93 24 12          and a, $12
+      95 25 34 12       and a, $1234
+      98 26             and a, (x)
+      99 27 12          and a, ($12 + x)
+      9b 28 12          and a, #$12
+      9d 29 34 12       and $12, $34
+      a0 34 12          and a, $12 + x
+      a2 35 34 12       and a, $1234 + x
+      a5 36 34 12       and a, $1234 + y
+      a8 37 12          and a, ($12) + y
+      aa 38 34 12       and $12, #$34
+      ad 39             and (x), (y)
+      ae                
+      ae 44 12          eor a, $12
+      b0 45 34 12       eor a, $1234
+      b3 46             eor a, (x)
+      b4 47 12          eor a, ($12 + x)
+      b6 48 12          eor a, #$12
+      b8 49 34 12       eor $12, $34
+      bb 54 12          eor a, $12 + x
+      bd 55 34 12       eor a, $1234 + x
+      c0 56 34 12       eor a, $1234 + y
+      c3 57 12          eor a, ($12) + y
+      c5 58 34 12       eor $12, #$34
+      c8 59             eor (x), (y)
+      c9                
+      c9 64 12          cmp a, $12
+      cb 65 34 12       cmp a, $1234
+      ce 66             cmp a, (x)
+      cf 67 12          cmp a, ($12 + x)
+      d1 68 12          cmp a, #$12
+      d3 69 34 12       cmp $12, $34
+      d6 74 12          cmp a, $12 + x
+      d8 75 34 12       cmp a, $1234 + x
+      db 76 34 12       cmp a, $1234 + y
+      de 77 12          cmp a, ($12) + y
+      e0 78 34 12       cmp $12, #$34
+      e3 79             cmp (x), (y)
+      e4                
+      e4 84 12          adc a, $12
+      e6 85 34 12       adc a, $1234
+      e9 86             adc a, (x)
+      ea 87 12          adc a, ($12 + x)
+      ec 88 12          adc a, #$12
+      ee 89 34 12       adc $12, $34
+      f1 94 12          adc a, $12 + x
+      f3 95 34 12       adc a, $1234 + x
+      f6 96 34 12       adc a, $1234 + y
+      f9 97 12          adc a, ($12) + y
+      fb 98 34 12       adc $12, #$34
+      fe 99             adc (x), (y)
+      ff                
+      ff a4 12          sbc a, $12
+     101 a5 34 12       sbc a, $1234
+     104 a6             sbc a, (x)
+     105 a7 12          sbc a, ($12 + x)
+     107 a8 12          sbc a, #$12
+     109 a9 34 12       sbc $12, $34
+     10c b4 12          sbc a, $12 + x
+     10e b5 34 12       sbc a, $1234 + x
+     111 b6 34 12       sbc a, $1234 + y
+     114 b7 12          sbc a, ($12) + y
+     116 b8 34 12       sbc $12, #$34
+     119 b9             sbc (x), (y)
+     11a                
+     11a c4 12          mov $12, a
+     11c c5 34 12       mov $1234, a
+     11f c6             mov (x), a
+     120 c7 12          mov ($12 + x), a
+     122 c8 12          cmp x, #$12
+     124 c9 34 12       mov $1234, x
+     127 d4 12          mov $12 + x, a
+     129 d5 34 12       mov $1234 + x, a
+     12c d6 34 12       mov $1234 + y, a
+     12f d7 12          mov ($12) + y, a
+     131 d8 12          mov $12, x
+     133 d9 12          mov $12 + y, x
+     135                
+     135 e4 12          mov a, $12
+     137 e5 34 12       mov a, $1234
+     13a e6             mov a, (x)
+     13b e7 12          mov a, ($12 + x)
+     13d e8 12          mov a, #$12
+     13f e9 35 12       mov x, $1235
+     142 f4 12          mov a, $12 + x
+     144 f5 34 12       mov a, $1234 + x
+     147 f6 34 12       mov a, $1234 + y
+     14a f7 12          mov a, ($12) + y
+     14c f8 12          mov x, $12
+     14e f9 12          mov x, $12 + y
+     150                
+     150 0a 34 32       or1 c, $1234,1
+     153 1a 12          decw $12
+     155 2a 34 32       or1 c, /$1234,1
+     158 3a 12          incw $12
+     15a 4a 34 32       and1 c, $1234,1
+     15d 5a 12          cmpw ya, $12
+     15f 6a 34 32       and1 c, /$1234,1
+     162 7a 12          addw ya, $12
+     164 8a 34 32       eor1 c, $1234,1
+     167 9a 12          subw ya, $12
+     169 aa 34 32       mov1 c, $1234,1
+     16c ba 12          movw ya, $12
+     16e ca 34 32       mov1 $1234,1, c
+     171 da 12          movw $12, ya
+     173 ea 34 32       not1 $1234,1
+     176 fa 34 12       mov $12, $34
+     179                
+     179 0b 12          asl $12
+     17b 0c 34 12       asl $1234
+     17e 1b 12          asl $12 + x
+     180 1c             asl a
+     181 2b 12          rol $12
+     183 2c 34 12       rol $1234
+     186 3b 12          rol $12 + x
+     188 3c             rol a
+     189 4b 12          lsr $12
+     18b 4c 34 12       lsr $1234
+     18e 5b 12          lsr $12 + x
+     190 5c             lsr a
+     191 6b 12          ror $12
+     193 6c 34 12       ror $1234
+     196 7b 12          ror $12 + x
+     198 7c             ror a
+     199                
+     199 8b 12          dec $12
+     19b 8c 34 12       dec $1234
+     19e 9b 12          dec $12 + x
+     1a0 9c             dec a
+     1a1 ab 12          inc $12
+     1a3 ac 34 12       inc $1234
+     1a6 bb 12          inc $12 + x
+     1a8 bc             inc a
+     1a9 cb 12          mov $12, y
+     1ab cc 34 12       mov $1234, y
+     1ae db 12          mov $12 + x, y
+     1b0 dc             dec y
+     1b1 eb 12          mov y, $12
+     1b3 ec 34 12       mov y, $1234
+     1b6 fb 12          mov y, $12 + x
+     1b8 fc             inc y
+     1b9                
+     1b9 0d             push psw
+     1ba 1d             dec x
+     1bb 2d             push a
+     1bc 3d             inc x
+     1bd 4d             push x
+     1be 5d             mov x, a
+     1bf 6d             push y
+     1c0 7d             mov a, x
+     1c1 8d 12          mov y, #$12
+     1c3 9d             mov x, sp
+     1c4 ad 12          cmp y, #$12
+     1c6 bd             mov sp, x
+     1c7 cd 12          mov x, #$12
+     1c9 dd             mov a, y
+     1ca ed             notc
+     1cb fd             mov y, a
+     1cc                
+     1cc 0e 34 12       tset $1234
+     1cf 1e 34 12       cmp x, $1234
+     1d2 2e 12 34       cbne $12, * + $37
+     1d5 3e 12          cmp x, $12
+     1d7 4e 34 12       tclr $1234
+     1da 5e 34 12       cmp y, $1234
+     1dd 6e 12 34       dbnz $12, * + $37
+     1e0 7e 12          cmp y, $12
+     1e2 8e             pop psw
+     1e3 9e             div ya, x
+     1e4 ae             pop a
+     1e5 be             das a
+     1e6 ce             pop x
+     1e7 de 12 34       cbne $12 + x, * + $37
+     1ea ee             pop y
+     1eb fe 12          dbnz y, * + $14
+     1ed                
+     1ed 0f             brk
+     1ee 1f 34 12       jmp ($1234 + x)
+     1f1 2f 12          bra * + $14
+     1f3 3f 34 12       call $1234
+     1f6 4f 12          pcall $12
+     1f8 5f 34 12       jmp $1234
+     1fb 6f             ret
+     1fc 7f             reti
+     1fd 8f 34 12       mov $12, #$34
+     200 9f             xcn a
+     201 af             mov (x+), a
+     202 bf             mov a, (x+)
+     203 cf             mul ya
+     204 df             daa a
+     205 ef             sleep
+     206 ff             stop
+     207                
+     207                
+     207                .arch m6502
+     207                .org $8000
+    8000                
+    8000                ; line syntax tests
+    8000                
+    8000 a9 12            lda #$12 ; comment
+    8002 ea             nop;no space
+    8003 0d 80 0a 80      .dw      lbl2  , lbl ;  ,cmt
+    8007 a6 34              ldx      $34
+    8009 0a             asl
+    800a                .endscope
+    800a                ; (endscope is always allowed)
+    800a 20 02 00       lbl:jsr $2
+    800d 0c 38            lbl2:  .db val, val2   
+    800f                val=12
+    800f                val2 = 56;comment
+    800f                  val3  :=   53;
+    800f                val3:=3
+    800f                ;val3:=4
+    800f 03             .db val3
+    8010 61 62 63 3b +  .db "abc; no comment"; comment
+    801f 3b 2c 61 27 +  .db ';', ',', 'a', '\'', 2
+    8024 22 27 2c 5c +  .db "\"\',\\\r\n\t\u(63)" ; "comment"
+    802c                
+    802c                ; expression tests
+    802c                
+    802c 0e             .db 2 + 3 * 4
+    802d 14             .db (2 + 3) * 4
+    802e 18 02          .db 6 << 2, 257 >> 7
+    8030 00             .db 6 < <2
+    8031 fb             .db 2 - 3 - 4
+    8032 03             .db 2 - (3 - 4)
+    8033 06             .db ((6 / 2) * 3) % 6 + (5 - 2)
+    8034 00 01 01 01    .db 7 < 2, 7 > 5, 6 <= 6, 7 >= 5
+    8038 00 01 01 00    .db 4 == 5, 2 == 2, 4 != 2, 6 != 6
+    803c 05             .db (5 & 1 | 6) ^ 2
+    803d 01 01 01 01    .db 3 & 1, 3 && 1, 3 || 1, 5 || 5
+    8041 00 01          .db 1 ^^ 1, 0 ^^ 1
+    8043 00 10          .db 7 + 2 < 9, (6 * 2 | 3) + 1
+    8045 00 01 00 fb    .db !4, ?4, ?0, -5
+    8049 34 12 12       .db <$1234, >$1234, ^$123456
+    804c 32 43          .dw &$764332
+    804e fa d4 92 12    .db $fa, %11010100, ~%01101101, <~%11101101
+    8052 05 02 61       .db 5 % 10, %10, 'a'
+    8055 63 6f 6e 63 +  .db "con" + "cat"
+    805b                
+    805b                ; directive tests
+    805b                
+    805b                .include "dirs" + ".s"
+    805b                
+    805b                .arch spc700
+    805b                
+    805b                
+    805b                ; still 6502, even though file ends otherwise
+    805b a9 a9          lda #$a9
+    805d                
