@@ -27,7 +27,7 @@ Note that the exact syntax is not fully finalized and may change.
 - Tokenisation of argument strings before parsing (move opcode parsing away from current regexp-approach), and general parsing improvements
 - Functions (e.g. `min`, `strlen`, `select`, `slice`, `dec`, `asize`)
 - Dynamic label definition to/from string (`.define "name", 12`, `lbl("name")`)
-- (Better) tests
+- Better tests (error cases, CLI arguments)
 - Allow running easier
 - API for use in other node-apps?
 - More directives? (e.g. while loops?)

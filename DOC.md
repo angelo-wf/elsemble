@@ -77,7 +77,7 @@ Strings and character constants support escape sequences within them using a bac
 - `\"`: double quote
 - `\'`: single quote
 - `\\`: backslash
-- `\u(<value>)`: the Unicode charcter with codepoint `<value>`
+- `\u(<value>)`: the Unicode charcter with hexadecimal codepoint `<value>`
 
 The characters for character constants are mapped according to the currently set character mapping.
 
@@ -134,7 +134,7 @@ Macros can be defined:
 - `.macro <name>, [blocklabel, ...]`: Start a macro definition for the macro names `name`, needing the amount of arguments provided. The arguments are block labels which are defined when the macro is called.
 - `.endmacro`: Ends a macro definiton.
 
-Block-labels can be defined within a repeat statement and are unique per macro call.
+Block-labels can be defined within a macro definition and are unique per macro expansion.
 
 Macros cannot be defined within other macros and cannot be redefined.
 
@@ -250,7 +250,7 @@ The assembler follows the general conventions for 6502 syntax. The following thi
 
 The assembler follows the general conventions for 65816 syntax. The following things are of note:
 - The assembler has a address resolution system to allow the most optimal form for opcodes with multiple forms. Some postfixes on opcodes are available:
-  - For direct-page opcodes, `.b` can be used to ignore address resolution and just use the argument as an 8-bit value to use.
+  - For direct-page (DP) opcodes, `.b` can be used to ignore address resolution and just use the argument as an 8-bit value to use.
   - For absoulte opcodes, `.w` can be used to ignore address resolution and just use the argument as an 16-bit value to use.
   - For opcodes with both direct page and absoulte forms, `.a` can be used to ignore the direct-page possibility, but still check and use absolute addressing.
   - For opcodes with DP, absolute and long forms, `.l` can be used to force long addressing.
@@ -288,6 +288,6 @@ The assemnler roughly uses the specified opcode formats, but does deviate in som
 - Bit-opcodes use a comma between the value and the bit (`set1 $12,3`, `and1 c, /$1234,4`) and not a dot.
 - The bit-test opcodes do not end with `1` (`tset`, `tclr`).
 
-The `.dirpage <value>` directive can be used to set the direct page value used for DP resolution to 0 or 256.
+The `.dirpage <value>` directive can be used to set the direct page value used for DP resolution to 0 or 256 ($100).
 
 When smart mode is enabled, the direct page value is updated automatically when `setp` and `clrp` opcodes are assembled.
