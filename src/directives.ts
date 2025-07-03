@@ -14,7 +14,7 @@ export enum Directive {
   ENDMACRO = "endmacro",
   INCLUDE = "include",
   ORG = "org",
-  FILLBYTE = "fillyte",
+  FILLBYTE = "fillbyte",
   PAD = "pad",
   FILL = "fill",
   ALIGN = "align",

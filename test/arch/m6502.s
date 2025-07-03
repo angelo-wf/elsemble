@@ -164,3 +164,10 @@ dec $1234
 dec $1234, x
 inc $1234
 inc $1234, x
+
+; alt forms
+asl a
+rol a
+lsr a
+ror a
+brk

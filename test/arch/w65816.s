@@ -273,3 +273,13 @@ cmp $123456
 cmp $123456, x
 sbc $123456
 sbc $123456, x
+
+; alt forms
+asl a
+rol a
+lsr a
+ror a
+inc a
+dec a
+brk
+cop

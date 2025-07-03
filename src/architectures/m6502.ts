@@ -172,7 +172,7 @@ function addZpage(map: OpcodeMap, opcode: string, regex: RegExp, val: number): v
 
 function addZpAbs(map: OpcodeMap, opcode: string, regex: RegExp, valz: number, vala: number): void {
   addItem(map, opcode, {regex, adrs: [AdrMode.DPABS], vals: [[valz, vala]], argMap: [-1, 1]});
-  addItem(map, opcode + ".a", {regex, adrs: [AdrMode.DP], vals: [vala], argMap: [-1, 1]});
+  addItem(map, opcode + ".a", {regex, adrs: [AdrMode.ABS], vals: [vala], argMap: [-1, 1]});
 }
 
 function addAbsol(map: OpcodeMap, opcode: string, regex: RegExp, val: number): void {

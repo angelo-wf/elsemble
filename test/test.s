@@ -17,12 +17,18 @@
   lda #$12 ; comment
 nop;no space
   .dw      lbl2  , lbl ;  ,cmt
-    ldx      $34
+    ldx      lbl3
+  lda lbl4, x
 asl
+lsr   
+  nop
 .endscope
+  .endscope  
 ; (endscope is always allowed)
 lbl:jsr $2
   lbl2:  .db val, val2   
+  lbl3:
+lbl4:
 val=12
 val2 = 56;comment
   val3  :=   53;
@@ -35,25 +41,56 @@ val3:=3
 
 ; expression tests
 
+.db 6 * 8, $20 * %11
+.db 8 / 2, 7 / 3
+.db 6 % 2, 10 % 4
+.db 7 + 5, -3 + 6
+.db 6 - 5, 8 - 10
+.db $20 << 2, 7 << 1
+.db $40 >> %0101, -7 >> 2
+.db %1100 & %1010, $37 & $f
+.db %1100 | %1010, $40 | %10010
+.db 3 ^ 2, %1100 ^ %1010
+.db 6 < 5, 5 < 5, 4 < 5
+.db $10 <= 17, %10001 <= $11, 18 < 17
+.db 8 > 5, 5 > 5, -7 > 5
+.db 6 >= 2, 2 >= 2, -1 >= 2
+.db 3 == 3, 5 == 4
+.db 7 != 5, 4 != 4
+.db 2 && 3, 5 && 0, 0 && 0
+.db 1 || 0, 3 || 5, 0 || 0
+.db 1 ^^ 0, 2 ^^ 1, 0 ^^ 0
+
+.db -5, -0
+.db +4, +5
+.db ~%1001, ~0
+.db !5, !0, !1
+.db ?7, ?$34, ?%0
+.db <$1234, <-1
+.db >$1234, >2
+.db ^$123456, ^%100101100101010110101010
+.dw &$654321, &$18023
+
+.db "2" == 2, '2' == "2", "abc" == "abc"
+.db "ab" != 5, "ab" != "ab", "ab" != "cd"
+.db ?"a", ?"", ?"0"
+.db +"abc"
+.db "con" + "cat"
+.db "a" && 0, "a" && 1
+
+.db 16*4+(6-%100)
 .db 2 + 3 * 4
 .db (2 + 3) * 4
-.db 6 << 2, 257 >> 7
+.db 6 << 2
 .db 6 < <2
 .db 2 - 3 - 4
 .db 2 - (3 - 4)
+.db 2 + 3 - 5
+.db 21 % 10
 .db ((6 / 2) * 3) % 6 + (5 - 2)
-.db 7 < 2, 7 > 5, 6 <= 6, 7 >= 5
-.db 4 == 5, 2 == 2, 4 != 2, 6 != 6
 .db (5 & 1 | 6) ^ 2
-.db 3 & 1, 3 && 1, 3 || 1, 5 || 5
-.db 1 ^^ 1, 0 ^^ 1
 .db 7 + 2 < 9, (6 * 2 | 3) + 1
-.db !4, ?4, ?0, -5
-.db <$1234, >$1234, ^$123456
-.dw &$764332
-.db $fa, %11010100, ~%01101101, <~%11101101
-.db 5 % 10, %10, 'a'
-.db "con" + "cat"
+.db 2 + 3 - 5^^^$12345
 
 ; directive tests
 
@@ -61,3 +98,7 @@ val3:=3
 
 ; still 6502, even though file ends otherwise
 lda #$a9
+
+; testing some more practical/real world things
+
+.include "practical.s"

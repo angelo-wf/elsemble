@@ -173,10 +173,17 @@
      13c ee 34 12       inc $1234
      13f fe 34 12       inc $1234, x
      142                
-     142                .include "arch/w65816.s"
-     142                
-     142                .arch w65816
-     142                .org 0
+     142                ; alt forms
+     142 0a             asl a
+     143 2a             rol a
+     144 4a             lsr a
+     145 6a             ror a
+     146 00             brk
+     147                
+     147                .include "arch/w65816.s"
+     147                
+     147                .arch w65816
+     147                .org 0
        0                
        0 00 12          brk #$12
        2 10 12          bpl * + $14
@@ -450,10 +457,20 @@
      227 ef 56 34 12    sbc $123456
      22b ff 56 34 12    sbc $123456, x
      22f                
-     22f                .include "arch/spc700.s"
-     22f                
-     22f                .arch spc700
-     22f                .org 0
+     22f                ; alt forms
+     22f 0a             asl a
+     230 2a             rol a
+     231 4a             lsr a
+     232 6a             ror a
+     233 1a             inc a
+     234 3a             dec a
+     235 00             brk
+     236 02             cop
+     237                
+     237                .include "arch/spc700.s"
+     237                
+     237                .arch spc700
+     237                .org 0
        0                
        0 00             nop
        1 10 12          bpl * + $14
@@ -737,52 +754,530 @@
     8000                
     8000 a9 12            lda #$12 ; comment
     8002 ea             nop;no space
-    8003 0d 80 0a 80      .dw      lbl2  , lbl ;  ,cmt
-    8007 a6 34              ldx      $34
-    8009 0a             asl
-    800a                .endscope
-    800a                ; (endscope is always allowed)
-    800a 20 02 00       lbl:jsr $2
-    800d 0c 38            lbl2:  .db val, val2   
-    800f                val=12
-    800f                val2 = 56;comment
-    800f                  val3  :=   53;
-    800f                val3:=3
-    800f                ;val3:=4
-    800f 03             .db val3
-    8010 61 62 63 3b +  .db "abc; no comment"; comment
-    801f 3b 2c 61 27 +  .db ';', ',', 'a', '\'', 2
-    8024 22 27 2c 5c +  .db "\"\',\\\r\n\t\u(63)" ; "comment"
-    802c                
-    802c                ; expression tests
-    802c                
-    802c 0e             .db 2 + 3 * 4
-    802d 14             .db (2 + 3) * 4
-    802e 18 02          .db 6 << 2, 257 >> 7
-    8030 00             .db 6 < <2
-    8031 fb             .db 2 - 3 - 4
-    8032 03             .db 2 - (3 - 4)
-    8033 06             .db ((6 / 2) * 3) % 6 + (5 - 2)
-    8034 00 01 01 01    .db 7 < 2, 7 > 5, 6 <= 6, 7 >= 5
-    8038 00 01 01 00    .db 4 == 5, 2 == 2, 4 != 2, 6 != 6
-    803c 05             .db (5 & 1 | 6) ^ 2
-    803d 01 01 01 01    .db 3 & 1, 3 && 1, 3 || 1, 5 || 5
-    8041 00 01          .db 1 ^^ 1, 0 ^^ 1
-    8043 00 10          .db 7 + 2 < 9, (6 * 2 | 3) + 1
-    8045 00 01 00 fb    .db !4, ?4, ?0, -5
-    8049 34 12 12       .db <$1234, >$1234, ^$123456
-    804c 32 43          .dw &$764332
-    804e fa d4 92 12    .db $fa, %11010100, ~%01101101, <~%11101101
-    8052 05 02 61       .db 5 % 10, %10, 'a'
-    8055 63 6f 6e 63 +  .db "con" + "cat"
-    805b                
-    805b                ; directive tests
-    805b                
-    805b                .include "dirs" + ".s"
-    805b                
-    805b                .arch spc700
-    805b                
-    805b                
-    805b                ; still 6502, even though file ends otherwise
-    805b a9 a9          lda #$a9
-    805d                
+    8003 13 80 10 80      .dw      lbl2  , lbl ;  ,cmt
+    8007 ae 15 80           ldx      lbl3
+    800a bd 15 80         lda lbl4, x
+    800d 0a             asl
+    800e 4a             lsr   
+    800f ea               nop
+    8010                .endscope
+    8010                  .endscope  
+    8010                ; (endscope is always allowed)
+    8010 20 02 00       lbl:jsr $2
+    8013 0c 38            lbl2:  .db val, val2   
+    8015                  lbl3:
+    8015                lbl4:
+    8015                val=12
+    8015                val2 = 56;comment
+    8015                  val3  :=   53;
+    8015                val3:=3
+    8015                ;val3:=4
+    8015 03             .db val3
+    8016 61 62 63 3b +  .db "abc; no comment"; comment
+    8025 3b 2c 61 27 +  .db ';', ',', 'a', '\'', 2
+    802a 22 27 2c 5c +  .db "\"\',\\\r\n\t\u(63)" ; "comment"
+    8032                
+    8032                ; expression tests
+    8032                
+    8032 30 60          .db 6 * 8, $20 * %11
+    8034 04 02          .db 8 / 2, 7 / 3
+    8036 00 02          .db 6 % 2, 10 % 4
+    8038 0c 03          .db 7 + 5, -3 + 6
+    803a 01 fe          .db 6 - 5, 8 - 10
+    803c 80 0e          .db $20 << 2, 7 << 1
+    803e 02 fe          .db $40 >> %0101, -7 >> 2
+    8040 08 07          .db %1100 & %1010, $37 & $f
+    8042 0e 52          .db %1100 | %1010, $40 | %10010
+    8044 01 06          .db 3 ^ 2, %1100 ^ %1010
+    8046 00 00 01       .db 6 < 5, 5 < 5, 4 < 5
+    8049 01 01 00       .db $10 <= 17, %10001 <= $11, 18 < 17
+    804c 01 00 00       .db 8 > 5, 5 > 5, -7 > 5
+    804f 01 01 00       .db 6 >= 2, 2 >= 2, -1 >= 2
+    8052 01 00          .db 3 == 3, 5 == 4
+    8054 01 00          .db 7 != 5, 4 != 4
+    8056 01 00 00       .db 2 && 3, 5 && 0, 0 && 0
+    8059 01 01 00       .db 1 || 0, 3 || 5, 0 || 0
+    805c 01 00 00       .db 1 ^^ 0, 2 ^^ 1, 0 ^^ 0
+    805f                
+    805f fb 00          .db -5, -0
+    8061 04 05          .db +4, +5
+    8063 f6 ff          .db ~%1001, ~0
+    8065 00 01 00       .db !5, !0, !1
+    8068 01 01 00       .db ?7, ?$34, ?%0
+    806b 34 ff          .db <$1234, <-1
+    806d 12 00          .db >$1234, >2
+    806f 12 96          .db ^$123456, ^%100101100101010110101010
+    8071 21 43 23 80    .dw &$654321, &$18023
+    8075                
+    8075 00 00 01       .db "2" == 2, '2' == "2", "abc" == "abc"
+    8078 01 00 01       .db "ab" != 5, "ab" != "ab", "ab" != "cd"
+    807b 01 01 01       .db ?"a", ?"", ?"0"
+    807e 61 62 63       .db +"abc"
+    8081 63 6f 6e 63 +  .db "con" + "cat"
+    8087 00 01          .db "a" && 0, "a" && 1
+    8089                
+    8089 42             .db 16*4+(6-%100)
+    808a 0e             .db 2 + 3 * 4
+    808b 14             .db (2 + 3) * 4
+    808c 18             .db 6 << 2
+    808d 00             .db 6 < <2
+    808e fb             .db 2 - 3 - 4
+    808f 03             .db 2 - (3 - 4)
+    8090 00             .db 2 + 3 - 5
+    8091 01             .db 21 % 10
+    8092 06             .db ((6 / 2) * 3) % 6 + (5 - 2)
+    8093 05             .db (5 & 1 | 6) ^ 2
+    8094 00 10          .db 7 + 2 < 9, (6 * 2 | 3) + 1
+    8096 01             .db 2 + 3 - 5^^^$12345
+    8097                
+    8097                ; directive tests
+    8097                
+    8097                .include "dirs" + ".s"
+    8097                
+    8097                fa = 5
+    8097                fb = 6
+    8097                
+    8097                .if fa == 5
+    8097 01               .db 1
+    8098                .elif fb == 6
+    8098                  .db 2
+    8098                .else
+    8098                  .db 3
+    8098                .endif
+    8098                
+    8098                .if fa == 8
+    8098                  .db 4
+    8098                .elif fb == 6
+    8098 05               .db 5
+    8099                .else
+    8099                  .db 6
+    8099                .endif
+    8099                
+    8099                .if 0
+    8099                  .db 7
+    8099                .else
+    8099 08               .db 8
+    809a                .endif
+    809a                
+    809a                .if fb != 6
+    809a                  .if fa == 5
+    809a                    .db 9
+    809a                  .endif
+    809a                .else
+    809a                  .if fa == 6
+    809a                    .db 10
+    809a                  .else
+    809a 0b                 .db 11
+    809b                  .endif
+    809b                .endif
+    809b                
+    809b                .ifdef fa
+    809b 0c               .db 12
+    809c                .else
+    809c                  .db 13
+    809c                .endif
+    809c                
+    809c                .ifdef fc
+    809c                  .db 14
+    809c                .else
+    809c 0f               .db 15
+    809d                .endif
+    809d                
+    809d                .ifndef fc
+    809d 10               .db 16
+    809e                .else
+    809e                  .db 17
+    809e                .endif
+    809e                
+    809e                
+    809e                .repeat ra
+    809e 02               .db 2
+    809f 02 02 02       .endrepeat
+    80a2                
+    80a2                ra = 4
+    80a2                
+    80a2                .repeat 5, @i
+    80a2 01               .db @i + 1
+    80a3 02 03 04 05    .endrepeat
+    80a7                
+    80a7                .repeat 3, @i
+    80a7 00 06            .db @i, @k
+    80a9                  @k = 6
+    80a9                  .repeat 2, @j
+    80a9 00 00 ff           .db @i, @j, @k
+    80ac                    @k = -1
+    80ac 00 01 ff         .endrepeat
+    80af 01 06 01 00 +  .endrepeat
+    80bf                
+    80bf                .repeat rb
+    80bf                  .db 1
+    80bf                .endrepeat
+    80bf                
+    80bf                rb = 0
+    80bf                
+    80bf                
+    80bf                .macro ma, @b
+    80bf                  .db @b
+    80bf                .endmacro
+    80bf                
+    80bf                .macro mb, @v, @c
+    80bf                  .repeat @c, @d
+    80bf                    .db @v, @d
+    80bf                  .endrepeat
+    80bf                .endmacro
+    80bf                
+    80bf                .macro mc
+    80bf                  lda #$12 ; 6502 inherited from including file
+    80bf                .endmacro
+    80bf                
+    80bf 03             !ma 3
+    80c0 04 00 04 01    !mb 4, 2
+    80c4 a9 12          !mc
+    80c6                
+    80c6                
+    80c6                .org da
+    c000                
+    c000 00 00 00 00 +  .pad $c010
+    c010 ff ff ff ff +  .pad $c020, $ff
+    c020                .pad db
+    c020                
+    c020 00 00 00 00 +  .fill 16
+    c030 20 20 20 20 +  .fill dc, <db
+    c038                
+    c038 00 00 00 00 +  .align $20
+    c040                .align db & $ff
+    c040 01             .db 1
+    c041 34 34 34 34 +  .align $10, $34
+    c050                
+    c050                .fillbyte $ea
+    c050 ea ea ea ea +  .pad $c100
+    c100 0b 0b 0b 0b +  .fill 11, dc + 3
+    c10b                
+    c10b                .org 0
+       0                
+       0                .rpad $100
+     100                .rpad db - ($c020 - $100)
+     100                
+     100                .res 2
+     102                .res da - ($c000) + 1
+     103                
+     103                .ralign 8
+     108                
+     108                da = $c000
+     108                db = $c020
+     108                dc = 8
+     108                
+     108 ff ff 80       .db -1, 255, -128
+     10b fe ff ff ff    .dw -2, 65535
+     10f 61 00 00 80    .dw 'a', -32768
+     113 fd ff ff 01 +  .dl -3, 1
+     119 ff ff ff 00 +  .dl 16777215, -$800000
+     11f 3e 02          .dw **2
+     121                
+     121 34             .dlb $1234
+     122 12             .dhb $1234
+     123 56             .dbb $561234
+     124 34 12          .dlw $561234
+     126                
+     126 ad 7b ff 7f +  .incbin dname
+     226 ad 7b 24 09 +  .incbin dname, dcnt * 14
+     246 ad 7b ff 7f +  .incbin dname, dcnt * 2, dcnt
+     256                
+     256                dname = "data.bin"
+     256                dcnt = $10
+     256                
+     256                
+     256                .org %0
+       0                
+       0                g1:
+       0 01 02            .db 1, .l1
+       2                .l1:
+       2 02 00            .db 2, g1
+       4                g2:
+       4 03 06            .db 3, .l1
+       6                .l1:
+       6 04 02            .db 4, g1.l1
+       8                
+       8                s1:g1:
+       8 05 08            .db 5, s1:g1
+       a                
+       a                .scope s2
+       a                g1:
+       a 10 0c            .db 16, g1.l1
+       c                .l1:
+       c 11 0c            .db 17, .l1
+       e 0a 04            .db g1, g2
+      10                .endscope
+      10                
+      10 0c             .db s2:g1.l1
+      11                
+      11                .assert g1 == 0, "not hit"
+      11                
+      11 61 62 63 64    .db "abcd"
+      15                
+      15                .charmap "abcef", 5
+      15                .charmap "d", 16
+      15                
+      15 05 06 07 10    .db "abcd"
+      19 09 08          .db "fe"
+      1b                
+      1b                .clrcharmap
+      1b                
+      1b 61 62 63 64    .db "abcd"
+      1f                
+      1f                ; tests for address resolution and architecture-specific directives
+      1f                .include "./test/arch/adrres.s" ; cwd-relative path with './'
+      1f                
+      1f                .arch m6502
+      1f                
+      1f a5 12          lda $12
+      21 ad 12 00       lda.a $12
+      24 ad 34 12       lda $1234
+      27 ad 34 12       lda.a $1234
+      2a                
+      2a                
+      2a                .arch w65816
+      2a                
+      2a                .mirror $0, $0000, $5fff, $01, $3f
+      2a                .mirror $80, $0000, $1fff, $81
+      2a                
+      2a a5 12          lda $12
+      2c ad 12 00       lda.a $12
+      2f a5 12          lda $300012
+      31 ad 56 34       lda $3456
+      34 ad 56 34       lda $123456
+      37 af 56 34 44    lda $443456
+      3b                
+      3b                .bank $20
+      3b                
+      3b ad 34 12       lda $1234
+      3e af 10 60 00    lda $6010
+      42 ad 10 60       lda.w $6010
+      45 ad 10 60       lda $206010
+      48                
+      48                .dirpage $0180
+      48                
+      48 a5 05          lda $185
+      4a ad 85 00       lda $85
+      4d a5 85          lda.b $85
+      4f                
+      4f                .bank $40
+      4f                
+      4f a5 02          lda $182
+      51 af 82 01 00    lda.l $182
+      55 af 7f 01 00    lda $17f
+      59 af 34 12 00    lda $1234
+      5d                
+      5d                .bank $80
+      5d ad 00 00       lda $810000
+      60                .bank $81
+      60 ad 00 00       lda $800000
+      63                .clrmirror
+      63 af 00 00 80    lda $800000
+      67                
+      67 a9 00          lda #0
+      69 a2 00          ldx #0
+      6b                .asize 16
+      6b a9 00 00       lda #0
+      6e c2 10          rep #$10 ; does not affect, smart is off
+      70 a2 ff          ldx #-1
+      72                .isize 16
+      72 a9 ff ff       lda #-1
+      75 a2 ff ff       ldx #-1
+      78                .asize 8
+      78 a9 00          lda #0
+      7a                .isize 8
+      7a a2 ff          ldx #-1
+      7c                
+      7c                .smart on
+      7c                
+      7c a9 00          lda #0
+      7e c2 20          rep #$20
+      80 a9 00 00       lda #0
+      83 a2 00          ldx #0
+      85 c2 30          rep #$30
+      87 a2 00 00       ldx #0
+      8a e2 20          sep #$20
+      8c a2 00 00       ldx #0
+      8f a9 00          lda #0
+      91 e2 10          sep #$10
+      93 a2 00          ldx #0
+      95                
+      95                .smart off
+      95                
+      95 c2 30          rep #$30
+      97 a9 00          lda #0
+      99 a9 00          lda.b #0
+      9b a9 00 00       lda.w #0
+      9e                
+      9e                
+      9e                .arch spc700
+      9e                
+      9e e4 12          mov a, $12
+      a0 e5 12 00       mov.a a, $12
+      a3 40             setp ; not smart, ignored
+      a4 e5 12 01       mov a, $112
+      a7                .dirpage $100
+      a7 e5 12 00       mov a, $12
+      aa e4 12          mov.b a, $12
+      ac e4 12          mov a, $112
+      ae e5 22 02       mov a, $222
+      b1                .dirpage 0
+      b1                
+      b1                .smart on
+      b1                
+      b1 e5 01 01       mov a, $101
+      b4 40             setp
+      b5 e4 01          mov a, $101
+      b7 20             clrp
+      b8 e5 01 01       mov a, $101
+      bb e4 44          mov a, $44
+      bd                
+      bd                .smart off
+      bd                
+      bd 40             setp
+      be e5 12 01       mov a, $112
+      c1                
+      c1                
+      c1                .arch spc700
+      c1                
+      c1 9e             div ya, x
+      c2                
+      c2                
+      c2                ; still 6502, even though file ends otherwise
+      c2 a9 a9          lda #$a9
+      c4                
+      c4                ; testing some more practical/real world things
+      c4                
+      c4                .include "practical.s"
+      c4                
+      c4                ; overlapping allocation in ram
+      c4                
+      c4                .macro orgMax, @a, @b
+      c4                  .org (@a > @b) * @a | (@a <= @b) * @b
+      c4                .endmacro
+      c4                
+      c4                .org $0
+       0                .res 2
+       2                
+       2                startSecA:
+       2                .res 3
+       5                endSecA:
+       5                
+       5                .org startSecA
+       2                .res 4
+       6                endSecB:
+       6                
+       6                !orgMax endSecA, endSecB
+       6                .res 2
+       8                
+       8                startSecC:
+       8                .res 4
+       c                endSecC:
+       c                
+       c                .org startSecC
+       8                .res 1
+       9                endSecD:
+       9                
+       9                !orgMax endSecC, endSecD
+       c                .res 3
+       f                
+       f                ; aligning to end
+       f                
+       f                .org $10000 - (alignEnd - alignStart)
+    fff8                alignStart:
+    fff8 ea ea ea ea +  .fill alignNum + 1
+   10000                alignEnd:
+   10000                .assert * == $10000, "should be the case"
+   10000                
+   10000                alignNum = 7
+   10000                
+   10000                ; skipping half-banks
+   10000                
+   10000                .macro crossCheck, @a
+   10000                  .if >* != >@a
+   10000                    .res $80
+   10000                  .endif
+   10000                .endmacro
+   10000                
+   10000                .org $0780
+     780                
+     780                crossA:
+     780 ea ea ea ea +  .fill $20
+     7a0                !crossCheck crossA
+     7a0                
+     7a0                crossB:
+     7a0 ea ea ea ea +  .fill $70
+     810                !crossCheck crossB
+     890                
+     890                crossC:
+     890 ea ea ea ea +  .fill $40
+     8d0                !crossCheck crossC
+     8d0                
+     8d0                ; macro with return
+     8d0                
+     8d0                retVal := 0
+     8d0                .macro retMac, @a
+     8d0                  .db @a
+     8d0                  retVal := @a * 2
+     8d0                .endmacro
+     8d0                
+     8d0 08 00 0a 00    .dw valA, valB
+     8d4                
+     8d4 04             !retMac 4
+     8d5                valA = retVal
+     8d5 05             !retMac 5
+     8d6                valB = retVal
+     8d6                
+     8d6                ; one-time include
+     8d6                
+     8d6                .macro oti
+     8d6                  .ifndef otiDef
+     8d6                    otiDef := 1
+     8d6                
+     8d6                    .db 12
+     8d6                  .endif
+     8d6                .endmacro
+     8d6                
+     8d6 0c             !oti
+     8d7                !oti
+     8d7                
+     8d7                ; fibonacci-sequence
+     8d7                
+     8d7                fibRet := 0
+     8d7                .macro fib, @val
+     8d7                  .if @val < 2
+     8d7                    fibRet := 1
+     8d7                  .else
+     8d7                    !fib @val - 1
+     8d7                    @m1 = fibRet
+     8d7                    !fib @val - 2
+     8d7                    fibRet := fibRet + @m1
+     8d7                  .endif
+     8d7                .endmacro
+     8d7                
+     8d7                .repeat 10, @i
+     8d7                  !fib @i
+     8d7 01               .db fibRet ; first 10 terms
+     8d8 01 02 03 05 +  .endrepeat
+     8e1                
+     8e1                ; macros for sizes
+     8e1                
+     8e1                .arch w65816
+     8e1                .smart on
+     8e1                
+     8e1                .macro seta8
+     8e1                  sep #$20
+     8e1                .endmacro
+     8e1                
+     8e1                .macro seta16
+     8e1                  rep #$20
+     8e1                .endmacro
+     8e1                
+     8e1 a9 12          lda #$12
+     8e3 c2 20          !seta16
+     8e5 a9 12 00       lda #$12
+     8e8 e2 20          !seta8
+     8ea a9 12          lda #$12
+     8ec                
+     8ec                
