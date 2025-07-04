@@ -256,13 +256,13 @@ function isSpaceSignificant(left: string, right: string): boolean {
   return false;
 }
 
-function parseNumber(num: string): number {
+export function parseNumber(num: string): number {
   if(num.startsWith("$")) return parseInt(num.slice(1), 16);
   if(num.startsWith("%")) return parseInt(num.slice(1), 2);
   return parseInt(num, 10);
 }
 
-function handleStringEscapes(str: string): string {
+export function handleStringEscapes(str: string): string {
   let out = "";
   let chars = [...str];
   let pos = 0;

@@ -50,8 +50,8 @@ export class ExpressionHandler {
       case BinaryOperator.MODULUS: return this.calcNumeric(leftVal, rightVal, (a, b) => this.handleDivMod(a, b, true));
       case BinaryOperator.ADD: return this.handleAddition(leftVal, rightVal);
       case BinaryOperator.SUBTRACT: return this.calcNumeric(leftVal, rightVal, (a, b) => a - b);
-      case BinaryOperator.LSHIFT: return this.calcNumeric(leftVal, rightVal, (a, b) => a << b);
-      case BinaryOperator.RSHIFT: return this.calcNumeric(leftVal, rightVal, (a, b) => a >> b);
+      case BinaryOperator.LSHIFT: return this.calcNumeric(leftVal, rightVal, (a, b) => this.handleShift(a, b, false));
+      case BinaryOperator.RSHIFT: return this.calcNumeric(leftVal, rightVal, (a, b) => this.handleShift(a, b, true));
       case BinaryOperator.AND: return this.calcNumeric(leftVal, rightVal, (a, b) => a & b);
       case BinaryOperator.OR: return this.calcNumeric(leftVal, rightVal, (a, b) => a | b);
       case BinaryOperator.XOR: return this.calcNumeric(leftVal, rightVal, (a, b) => a ^ b);
@@ -85,5 +85,13 @@ export class ExpressionHandler {
       return 0;
     }
     return mod ? left % right : Math.trunc(left / right);
+  }
+
+  private handleShift(left: number, right: number, shiftRight: boolean): number {
+    if(right < 0) {
+      this.assembler.logError("Shift by negative value");
+      return 0;
+    }
+    return shiftRight ? left >> right : left << right; 
   }
 }

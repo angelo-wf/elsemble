@@ -137,7 +137,7 @@ export function checkLabel(label: string): string {
   }
   // check for other labels (.l, g, g.l, :g, :g.l, s:g, s:g.l)
   let otherLabelTest = label.match(/^(?:([A-Za-z_]\w*)?:)?([A-Za-z_]\w*)?(?:\.([A-Za-z_]\w*))?$/);
-  if(otherLabelTest) {
+  if(otherLabelTest && label.length > 0) {
     let [_, scope, global, local] = otherLabelTest;
     if(scope || label.startsWith(":")) {
       if(!global && local) throw new ParserError(`Invalid label '${label}'`);
