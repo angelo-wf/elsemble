@@ -1006,158 +1006,158 @@
        a 10 0c            .db 16, g1.l1
        c                .l1:
        c 11 0c            .db 17, .l1
-       e 0a 04            .db g1, g2
-      10                .endscope
-      10                
-      10 0c             .db s2:g1.l1
-      11                
-      11                .assert g1 == 0, "not hit"
-      11                
-      11 61 62 63 64    .db "abcd"
-      15                
-      15                .charmap "abcef", 5
-      15                .charmap "d", 16
-      15                
-      15 05 06 07 10    .db "abcd"
-      19 09 08          .db "fe"
-      1b                
-      1b                .clrcharmap
-      1b                
-      1b 61 62 63 64    .db "abcd"
-      1f                
-      1f                ; tests for address resolution and architecture-specific directives
-      1f                .include "./test/arch/adrres.s" ; cwd-relative path with './'
-      1f                
-      1f                .arch m6502
-      1f                
-      1f a5 12          lda $12
-      21 ad 12 00       lda.a $12
-      24 ad 34 12       lda $1234
-      27 ad 34 12       lda.a $1234
-      2a                
-      2a                
-      2a                .arch w65816
-      2a                
-      2a                .mirror $0, $0000, $5fff, $01, $3f
-      2a                .mirror $80, $0000, $1fff, $81
-      2a                
-      2a a5 12          lda $12
-      2c ad 12 00       lda.a $12
-      2f a5 12          lda $300012
-      31 ad 56 34       lda $3456
-      34 ad 56 34       lda $123456
-      37 af 56 34 44    lda $443456
-      3b                
-      3b                .bank $20
-      3b                
-      3b ad 34 12       lda $1234
-      3e af 10 60 00    lda $6010
-      42 ad 10 60       lda.w $6010
-      45 ad 10 60       lda $206010
-      48                
-      48                .dirpage $0180
-      48                
-      48 a5 05          lda $185
-      4a ad 85 00       lda $85
-      4d a5 85          lda.b $85
-      4f                
-      4f                .bank $40
-      4f                
-      4f a5 02          lda $182
-      51 af 82 01 00    lda.l $182
-      55 af 7f 01 00    lda $17f
-      59 af 34 12 00    lda $1234
-      5d                
-      5d                .bank $80
-      5d ad 00 00       lda $810000
-      60                .bank $81
-      60 ad 00 00       lda $800000
-      63                .clrmirror
-      63 af 00 00 80    lda $800000
-      67                
-      67 a9 00          lda #0
-      69 a2 00          ldx #0
-      6b                .asize 16
-      6b a9 00 00       lda #0
-      6e c2 10          rep #$10 ; does not affect, smart is off
-      70 a2 ff          ldx #-1
-      72                .isize 16
-      72 a9 ff ff       lda #-1
-      75 a2 ff ff       ldx #-1
-      78                .asize 8
-      78 a9 00          lda #0
-      7a                .isize 8
-      7a a2 ff          ldx #-1
-      7c                
-      7c                .smart on
-      7c                
-      7c a9 00          lda #0
-      7e c2 20          rep #$20
-      80 a9 00 00       lda #0
-      83 a2 00          ldx #0
-      85 c2 30          rep #$30
-      87 a2 00 00       ldx #0
-      8a e2 20          sep #$20
-      8c a2 00 00       ldx #0
-      8f a9 00          lda #0
-      91 e2 10          sep #$10
-      93 a2 00          ldx #0
-      95                
-      95                .smart off
-      95                
-      95 c2 30          rep #$30
-      97 a9 00          lda #0
-      99 a9 00          lda.b #0
-      9b a9 00 00       lda.w #0
-      9e                
-      9e                
-      9e                .arch spc700
-      9e                
-      9e e4 12          mov a, $12
-      a0 e5 12 00       mov.a a, $12
-      a3 40             setp ; not smart, ignored
-      a4 e5 12 01       mov a, $112
-      a7                .dirpage $100
-      a7 e5 12 00       mov a, $12
-      aa e4 12          mov.b a, $12
-      ac e4 12          mov a, $112
-      ae e5 22 02       mov a, $222
-      b1                .dirpage 0
-      b1                
-      b1                .smart on
-      b1                
-      b1 e5 01 01       mov a, $101
-      b4 40             setp
-      b5 e4 01          mov a, $101
-      b7 20             clrp
-      b8 e5 01 01       mov a, $101
-      bb e4 44          mov a, $44
-      bd                
-      bd                .smart off
-      bd                
-      bd 40             setp
-      be e5 12 01       mov a, $112
-      c1                
-      c1                
-      c1                .arch spc700
-      c1                
-      c1 9e             div ya, x
-      c2                
-      c2                
-      c2                ; still 6502, even though file ends otherwise
-      c2 a9 a9          lda #$a9
+       e 0a 04 00 06      .db g1, g2, :g1, :g2.l1
+      12                .endscope
+      12                
+      12 0c             .db s2:g1.l1
+      13                
+      13                .assert g1 == 0, "not hit"
+      13                
+      13 61 62 63 64    .db "abcd"
+      17                
+      17                .charmap "abcef", 5
+      17                .charmap "d", 16
+      17                
+      17 05 06 07 10    .db "abcd"
+      1b 09 08          .db "fe"
+      1d                
+      1d                .clrcharmap
+      1d                
+      1d 61 62 63 64    .db "abcd"
+      21                
+      21                ; tests for address resolution and architecture-specific directives
+      21                .include "./test/arch/adrres.s" ; cwd-relative path with './'
+      21                
+      21                .arch m6502
+      21                
+      21 a5 12          lda $12
+      23 ad 12 00       lda.a $12
+      26 ad 34 12       lda $1234
+      29 ad 34 12       lda.a $1234
+      2c                
+      2c                
+      2c                .arch w65816
+      2c                
+      2c                .mirror $0, $0000, $5fff, $01, $3f
+      2c                .mirror $80, $0000, $1fff, $81
+      2c                
+      2c a5 12          lda $12
+      2e ad 12 00       lda.a $12
+      31 a5 12          lda $300012
+      33 ad 56 34       lda $3456
+      36 ad 56 34       lda $123456
+      39 af 56 34 44    lda $443456
+      3d                
+      3d                .bank $20
+      3d                
+      3d ad 34 12       lda $1234
+      40 af 10 60 00    lda $6010
+      44 ad 10 60       lda.w $6010
+      47 ad 10 60       lda $206010
+      4a                
+      4a                .dirpage $0180
+      4a                
+      4a a5 05          lda $185
+      4c ad 85 00       lda $85
+      4f a5 85          lda.b $85
+      51                
+      51                .bank $40
+      51                
+      51 a5 02          lda $182
+      53 af 82 01 00    lda.l $182
+      57 af 7f 01 00    lda $17f
+      5b af 34 12 00    lda $1234
+      5f                
+      5f                .bank $80
+      5f ad 00 00       lda $810000
+      62                .bank $81
+      62 ad 00 00       lda $800000
+      65                .clrmirror
+      65 af 00 00 80    lda $800000
+      69                
+      69 a9 00          lda #0
+      6b a2 00          ldx #0
+      6d                .asize 16
+      6d a9 00 00       lda #0
+      70 c2 10          rep #$10 ; does not affect, smart is off
+      72 a2 ff          ldx #-1
+      74                .isize 16
+      74 a9 ff ff       lda #-1
+      77 a2 ff ff       ldx #-1
+      7a                .asize 8
+      7a a9 00          lda #0
+      7c                .isize 8
+      7c a2 ff          ldx #-1
+      7e                
+      7e                .smart on
+      7e                
+      7e a9 00          lda #0
+      80 c2 20          rep #$20
+      82 a9 00 00       lda #0
+      85 a2 00          ldx #0
+      87 c2 30          rep #$30
+      89 a2 00 00       ldx #0
+      8c e2 20          sep #$20
+      8e a2 00 00       ldx #0
+      91 a9 00          lda #0
+      93 e2 10          sep #$10
+      95 a2 00          ldx #0
+      97                
+      97                .smart off
+      97                
+      97 c2 30          rep #$30
+      99 a9 00          lda #0
+      9b a9 00          lda.b #0
+      9d a9 00 00       lda.w #0
+      a0                
+      a0                
+      a0                .arch spc700
+      a0                
+      a0 e4 12          mov a, $12
+      a2 e5 12 00       mov.a a, $12
+      a5 40             setp ; not smart, ignored
+      a6 e5 12 01       mov a, $112
+      a9                .dirpage $100
+      a9 e5 12 00       mov a, $12
+      ac e4 12          mov.b a, $12
+      ae e4 12          mov a, $112
+      b0 e5 22 02       mov a, $222
+      b3                .dirpage 0
+      b3                
+      b3                .smart on
+      b3                
+      b3 e5 01 01       mov a, $101
+      b6 40             setp
+      b7 e4 01          mov a, $101
+      b9 20             clrp
+      ba e5 01 01       mov a, $101
+      bd e4 44          mov a, $44
+      bf                
+      bf                .smart off
+      bf                
+      bf 40             setp
+      c0 e5 12 01       mov a, $112
+      c3                
+      c3                
+      c3                .arch spc700
+      c3                
+      c3 9e             div ya, x
       c4                
-      c4                ; testing some more practical/real world things
       c4                
-      c4                .include "practical.s"
-      c4                
-      c4                ; overlapping allocation in ram
-      c4                
-      c4                .macro orgMax, @a, @b
-      c4                  .org (@a > @b) * @a | (@a <= @b) * @b
-      c4                .endmacro
-      c4                
-      c4                .org $0
+      c4                ; still 6502, even though file ends otherwise
+      c4 a9 a9          lda #$a9
+      c6                
+      c6                ; testing some more practical/real world things
+      c6                
+      c6                .include "practical.s"
+      c6                
+      c6                ; overlapping allocation in ram
+      c6                
+      c6                .macro orgMax, @a, @b
+      c6                  .org (@a > @b) * @a | (@a <= @b) * @b
+      c6                .endmacro
+      c6                
+      c6                .org $0
        0                .res 2
        2                
        2                startSecA:
@@ -1184,9 +1184,12 @@
        f                
        f                ; aligning to end
        f                
-       f                .org $10000 - (alignEnd - alignStart)
+       f                .org $fff0
+    fff0                .fillbyte 0
+    fff0                
+    fff0 00 00 00 00 +  .pad $10000 - (alignEnd - alignStart)
     fff8                alignStart:
-    fff8 ea ea ea ea +  .fill alignNum + 1
+    fff8 00 00 00 00 +  .fill alignNum + 1
    10000                alignEnd:
    10000                .assert * == $10000, "should be the case"
    10000                
@@ -1203,15 +1206,15 @@
    10000                .org $0780
      780                
      780                crossA:
-     780 ea ea ea ea +  .fill $20
+     780 00 00 00 00 +  .fill $20
      7a0                !crossCheck crossA
      7a0                
      7a0                crossB:
-     7a0 ea ea ea ea +  .fill $70
+     7a0 00 00 00 00 +  .fill $70
      810                !crossCheck crossB
      890                
      890                crossC:
-     890 ea ea ea ea +  .fill $40
+     890 00 00 00 00 +  .fill $40
      8d0                !crossCheck crossC
      8d0                
      8d0                ; macro with return

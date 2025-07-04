@@ -171,7 +171,7 @@ g1:
   .db 16, g1.l1
 .l1:
   .db 17, .l1
-  .db g1, g2
+  .db g1, g2, :g1, :g2.l1
 .endscope
 
 .db s2:g1.l1

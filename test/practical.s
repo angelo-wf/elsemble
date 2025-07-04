@@ -32,7 +32,10 @@ endSecD:
 
 ; aligning to end
 
-.org $10000 - (alignEnd - alignStart)
+.org $fff0
+.fillbyte 0
+
+.pad $10000 - (alignEnd - alignStart)
 alignStart:
 .fill alignNum + 1
 alignEnd:
