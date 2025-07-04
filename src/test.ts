@@ -1,5 +1,7 @@
 import child_process from "node:child_process";
 import fs from "node:fs";
+import { matchArg, matcher } from "./opcodes.js";
+import { tokenize } from "./tokenizer.js";
 
 // handles running tests
 
@@ -15,6 +17,19 @@ function compareFiles(pathA: string, pathB: string): boolean {
   }
   return true;
 }
+
+// reproduction for Typescript bug(?)
+// let arr: {n: number}[] = [{n: 1}];
+// if(arr[0]!.n === 1) {
+//   arr = [{n: 4}];
+//   if(arr[0]!.n === 4) {
+//     console.log("this prints");
+//   } 
+// }
+
+// TODO: temp
+console.log(matchArg(tokenize("123,4"), matcher("", ",", "")));
+process.exit();
 
 // create dirctory for test results
 fs.mkdirSync("testout", {recursive: true});

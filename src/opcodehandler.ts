@@ -152,8 +152,8 @@ export class OpcodeHandler {
     }
   }
 
-  dirSmart(val: string): void {
-    let valStr = this.assembler.checkString(val);
+  dirSmart(val: ExpressionNode): void {
+    let valStr = this.assembler.checkString(this.assembler.checkName(val, false));
     if(valStr !== "on" && valStr !== "off") return this.assembler.logError("Expected 'on' or 'off'");
     this.smart = valStr === "on";
   } 

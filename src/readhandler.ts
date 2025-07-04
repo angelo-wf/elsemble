@@ -60,7 +60,7 @@ export class ReadHandler {
         output.push(parsed);
         // handle arch, has to be done during parsing as opcode parsing depends on it
         if(parsed.type === LineType.DIRECTIVE && parsed.directive === Directive.ARCH) {
-          arch = parseArchitecture(parsed.arguments[0] as string);
+          arch = parseArchitecture(this.assembler.checkName(parsed.arguments[0]!, false));
         }
         lineNum++;
       }

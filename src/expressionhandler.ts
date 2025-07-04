@@ -19,6 +19,8 @@ export class ExpressionHandler {
       case NodeType.SUBEXPR: return this.evaluateExpression(node.expression);
       case NodeType.PC: return this.assembler.getPc();
       case NodeType.LABEL: return this.assembler.getLabelValue(node.label);
+      case NodeType.BLOCKLABEL: return this.assembler.getLabelValue(node.label);
+      case NodeType.NAMELABEL: return this.assembler.getLabelValue(node.label);
       case NodeType.UNARY: return this.handleUnaryOperator(node.operator, node.right!);
       case NodeType.BINARY: return this.handleBinaryOperator(node.operator, node.left!, node.right!);
       default: throw (node satisfies never);

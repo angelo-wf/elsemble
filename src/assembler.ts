@@ -341,6 +341,7 @@ export class Assembler {
   }
 
   private expandLabelName(label: string): string[] {
+    if(label.length === 0) return [];
     if(label.startsWith("@")) {
       // block label, check if in block and return list to search
       if(this.blockStack.length === 0) {
@@ -421,6 +422,24 @@ export class Assembler {
     return num;
   }
 
+  // check for name or blocklabel
+  checkName(node: ExpressionNode, block: boolean): string {
+    if(node.type !== (block ? NodeType.BLOCKLABEL : NodeType.NAMELABEL)) {
+      this.logError(`Expected ${block ? "block label" : "name"}`);
+      return "";
+    }
+    return node.label;
+  }
+
+  // check for any label
+  checkLabel(node: ExpressionNode): string {
+    if(node.type !== NodeType.LABEL && node.type !== NodeType.BLOCKLABEL && node.type !== NodeType.NAMELABEL) {
+      this.logError(`Expected label`);
+      return "";
+    }
+    return node.label;
+  }
+
   // map character to number
   mapCharacter(char: string): number {
     if(!this.charMap.has(char)) {
@@ -455,51 +474,51 @@ export class Assembler {
 
   // directive handling / helpers
 
-  private handleDirective(directive: Directive, args: (ExpressionNode | string)[]): void {
+  private handleDirective(directive: Directive, args: ExpressionNode[]): void {
     let flowItem = this.flowStack.at(-1)!;
     let active = flowItem.active && flowItem.taken;
     let arch = this.includeStack.at(-1)!.arch;
     switch(directive) {
-      case Directive.IF: this.dirIf(args[0] as ExpressionNode, active); break;
-      case Directive.IFDEF: this.dirIfxdef(args[0] as string, false, active); break;
-      case Directive.IFNDEF: this.dirIfxdef(args[0] as string, true, active); break;
-      case Directive.ELIF: this.dirElif(args[0] as ExpressionNode, flowItem); break;
+      case Directive.IF: this.dirIf(args[0]!, active); break;
+      case Directive.IFDEF: this.dirIfxdef(args[0]!, false, active); break;
+      case Directive.IFNDEF: this.dirIfxdef(args[0]!, true, active); break;
+      case Directive.ELIF: this.dirElif(args[0]!, flowItem); break;
       case Directive.ELSE: this.dirElse(flowItem); break;
       case Directive.ENDIF: this.dirEndif(flowItem); break;
-      case Directive.REREAT: this.dirRepeat(args[0] as ExpressionNode, active, args[1] as string | undefined); break;
+      case Directive.REREAT: this.dirRepeat(args[0]!, active, args[1]); break;
       case Directive.ENDREPEAT: this.dirEndRepeat(flowItem); break;
-      case Directive.MACRO: if(active) this.dirMacro(args[0] as string, args.slice(1) as string[]); break;
+      case Directive.MACRO: if(active) this.dirMacro(args[0]!, args.slice(1)); break;
       case Directive.ENDMACRO: if(active) this.dirEndMacro(); break;
-      case Directive.INCLUDE: if(active) this.dirInclude(args[0] as ExpressionNode); break;
-      case Directive.ORG: if(active) this.dirOrg(args[0] as ExpressionNode); break;
-      case Directive.FILLBYTE: if(active) this.dirFillByte(args[0] as ExpressionNode); break;
-      case Directive.PAD: if(active) this.dirPad(args[0] as ExpressionNode, args[1] as ExpressionNode | undefined); break;
-      case Directive.FILL: if(active) this.dirFill(args[0] as ExpressionNode, args[1] as ExpressionNode | undefined); break;
-      case Directive.ALIGN: if(active) this.dirAlign(args[0] as ExpressionNode, args[1] as ExpressionNode | undefined); break;
-      case Directive.RPAD: if(active) this.dirRpad(args[0] as ExpressionNode); break;
-      case Directive.RES: if(active) this.dirRes(args[0] as ExpressionNode); break;
-      case Directive.RALIGN: if(active) this.dirRalign(args[0] as ExpressionNode); break;
-      case Directive.DB: if(active) this.dirDb(args as ExpressionNode[]); break;
-      case Directive.DW: if(active) this.dirDw(args as ExpressionNode[]); break;
-      case Directive.DL: if(active) this.dirDl(args as ExpressionNode[]); break;
-      case Directive.DLB: if(active) this.dirDxb(args as ExpressionNode[], 0); break;
-      case Directive.DHB: if(active) this.dirDxb(args as ExpressionNode[], 8); break;
-      case Directive.DBB: if(active) this.dirDxb(args as ExpressionNode[], 16); break;
-      case Directive.DLW: if(active) this.dirDlw(args as ExpressionNode[]); break;
-      case Directive.INCBIN: if(active) this.dirIncBin(args[0] as ExpressionNode, args[1] as ExpressionNode | undefined, args[2] as ExpressionNode | undefined); break;
-      case Directive.SCOPE: if(active) this.dirScope(args[0] as string); break;
+      case Directive.INCLUDE: if(active) this.dirInclude(args[0]!); break;
+      case Directive.ORG: if(active) this.dirOrg(args[0]!); break;
+      case Directive.FILLBYTE: if(active) this.dirFillByte(args[0]!); break;
+      case Directive.PAD: if(active) this.dirPad(args[0]!, args[1]); break;
+      case Directive.FILL: if(active) this.dirFill(args[0]!, args[1]); break;
+      case Directive.ALIGN: if(active) this.dirAlign(args[0]!, args[1]); break;
+      case Directive.RPAD: if(active) this.dirRpad(args[0]!); break;
+      case Directive.RES: if(active) this.dirRes(args[0]!); break;
+      case Directive.RALIGN: if(active) this.dirRalign(args[0]!); break;
+      case Directive.DB: if(active) this.dirDb(args); break;
+      case Directive.DW: if(active) this.dirDw(args); break;
+      case Directive.DL: if(active) this.dirDl(args); break;
+      case Directive.DLB: if(active) this.dirDxb(args, 0); break;
+      case Directive.DHB: if(active) this.dirDxb(args, 8); break;
+      case Directive.DBB: if(active) this.dirDxb(args, 16); break;
+      case Directive.DLW: if(active) this.dirDlw(args); break;
+      case Directive.INCBIN: if(active) this.dirIncBin(args[0]!, args[1], args[2]); break;
+      case Directive.SCOPE: if(active) this.dirScope(args[0]!); break;
       case Directive.ENDSCOPE: if(active) this.dirEndScope(); break;
-      case Directive.ASSERT: if(active) this.dirAssert(args[0] as ExpressionNode, args[1] as ExpressionNode); break;
-      case Directive.CHARMAP: if(active) this.dirCharMap(args[0] as ExpressionNode, args[1] as ExpressionNode); break;
+      case Directive.ASSERT: if(active) this.dirAssert(args[0]!, args[1]!); break;
+      case Directive.CHARMAP: if(active) this.dirCharMap(args[0]!, args[1]!); break;
       case Directive.CLRCHARMAP: if(active) this.dirClrCharMap(); break;
-      case Directive.ARCH: this.dirArch(args[0] as string); break;
-      case Directive.DIRPAGE: if(active) this.opcodeHandler.dirDirPage(args[0] as ExpressionNode, arch); break;
-      case Directive.BANK: if(active) this.opcodeHandler.dirBank(args[0] as ExpressionNode, arch); break;
-      case Directive.ASIZE: if(active) this.opcodeHandler.dirXsize(args[0] as ExpressionNode, false, arch); break;
-      case Directive.ISIZE: if(active) this.opcodeHandler.dirXsize(args[0] as ExpressionNode, true, arch); break;
-      case Directive.MIRROR: if(active) this.opcodeHandler.dirMirror(args[0] as ExpressionNode, args[1] as ExpressionNode, args[2] as ExpressionNode, args[3] as ExpressionNode, args[4] as ExpressionNode | undefined, arch); break;
+      case Directive.ARCH: this.dirArch(args[0]!); break;
+      case Directive.DIRPAGE: if(active) this.opcodeHandler.dirDirPage(args[0]!, arch); break;
+      case Directive.BANK: if(active) this.opcodeHandler.dirBank(args[0]!, arch); break;
+      case Directive.ASIZE: if(active) this.opcodeHandler.dirXsize(args[0]!, false, arch); break;
+      case Directive.ISIZE: if(active) this.opcodeHandler.dirXsize(args[0]!, true, arch); break;
+      case Directive.MIRROR: if(active) this.opcodeHandler.dirMirror(args[0]!, args[1]!, args[2]!, args[3]!, args[4], arch); break;
       case Directive.CLRMIRROR: if(active) this.opcodeHandler.dirClrMirror(arch); break;
-      case Directive.SMART: if(active) this.opcodeHandler.dirSmart(args[0] as string); break;
+      case Directive.SMART: if(active) this.opcodeHandler.dirSmart(args[0]!); break;
       default: throw (directive satisfies never);
     }
   }
@@ -526,8 +545,8 @@ export class Assembler {
     this.flowStack.push({type: FlowType.IF, active, taken: res, found: res, inElse: false});
   }
 
-  private dirIfxdef(test: string, not: boolean, active: boolean): void {
-    let res = this.isLabelDefined(test);
+  private dirIfxdef(test: ExpressionNode, not: boolean, active: boolean): void {
+    let res = this.isLabelDefined(this.checkLabel(test));
     if(not) res = !res;
     this.flowStack.push({type: FlowType.IF, active, taken: res, found: res, inElse: false});
   }
@@ -554,12 +573,13 @@ export class Assembler {
     this.flowStack.pop();
   }
 
-  private dirRepeat(amount: ExpressionNode, active: boolean, name?: string): void {
+  private dirRepeat(amount: ExpressionNode, active: boolean, name?: ExpressionNode): void {
     let count = this.checkRange(this.eval(amount), false);
     let includeItem = this.includeStack.at(-1)!;
-    this.flowStack.push({type: FlowType.REPEAT, active, taken: count > 0, count, num: 0, line: includeItem.line, includeItem, name});
+    let countName = name ? this.checkName(name, true) : undefined;
+    this.flowStack.push({type: FlowType.REPEAT, active, taken: count > 0, count, num: 0, line: includeItem.line, includeItem, name: countName});
     this.blockStack.push(`@r${this.blockNum++}`);
-    if(name) this.defineLabel(name, 0, false);
+    if(countName) this.defineLabel(countName, 0, false);
   }
 
   private dirEndRepeat(flowItem: FlowItem): void {
@@ -581,12 +601,14 @@ export class Assembler {
     }
   }
 
-  private dirMacro(name: string, args: string[]): void {
+  private dirMacro(name: ExpressionNode, args: ExpressionNode[]): void {
     if(this.definingMacro) return this.logError("Cannot define macro within macro");
-    if(this.macros.has(name)) return this.logError(`Attempted to redefine macro '${name}'`);
+    let macroName = this.checkName(name, false);
+    if(this.macros.has(macroName)) return this.logError(`Attempted to redefine macro '${macroName}'`);
     let includeItem = this.includeStack.at(-1)!;
-    this.macros.set(name, {args, lines: [], path: includeItem.path, line: includeItem.line + 1});
-    this.definingMacro = name;
+    let argNames = args.map(a => this.checkName(a, true));
+    this.macros.set(macroName, {args: argNames, lines: [], path: includeItem.path, line: includeItem.line + 1});
+    this.definingMacro = macroName;
   }
 
   private dirEndMacro(): void {
@@ -707,8 +729,8 @@ export class Assembler {
     this.pc += countVal;
   }
 
-  private dirScope(name: string): void {
-    this.scope = name;
+  private dirScope(name: ExpressionNode): void {
+    this.scope = this.checkName(name, false);
     this.globalLabel = undefined;
   }
 
@@ -741,10 +763,10 @@ export class Assembler {
     this.customChars = false;
   }
 
-  private dirArch(name: string): void {
+  private dirArch(name: ExpressionNode): void {
     if(this.flowStack.length > 1) this.logError("Cannot use .arch within .if or .repeat-statement");
     if(this.blockStack.length > 0) this.logError("Cannot use .arch within macro");
     // must be valid, as parsing would have failed otherwise
-    this.includeStack.at(-1)!.arch = parseArchitecture(name);
+    this.includeStack.at(-1)!.arch = parseArchitecture(this.checkName(name, false));
   }
 }

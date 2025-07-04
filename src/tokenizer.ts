@@ -1,4 +1,5 @@
-import { BinaryOperator, consumeSpaces, handleStringEscapes, parseNumber } from "./expressionparser.js";
+import { BinaryOperator } from "./expressionparser.js";
+import { ParserError } from "./lineparser.js";
 
 export enum TokenType {
   NUMBER,
@@ -24,10 +25,10 @@ export type Token = {
 
 export const eofToken: Token = {type: TokenType.EOF, raw: "\n"};
 
-const twoCharOps = Object.values(BinaryOperator).filter(v => v.length > 1) as string[];
-
 // tokenize a string into a list of tokens, ending with an EOF-token (handling comments)
 export function tokenize(input: string): Token[] {
+  // TODO: do this here now, as globally does not work (recursion in includes?)
+  const twoCharOps = Object.values(BinaryOperator).filter(v => v.length > 1) as string[];
   let tokens: Token[] = [];
   while(true) {
     input = consumeSpaces(input);
@@ -75,4 +76,50 @@ export function tokenize(input: string): Token[] {
   }
   tokens.push(eofToken);
   return tokens;
+}
+
+function parseNumber(num: string): number {
+  if(num.startsWith("$")) return parseInt(num.slice(1), 16);
+  if(num.startsWith("%")) return parseInt(num.slice(1), 2);
+  return parseInt(num, 10);
+}
+
+function handleStringEscapes(str: string): string {
+  let out = "";
+  let chars = [...str];
+  let pos = 0;
+  while(pos < chars.length) {
+    let char = chars[pos++]!;
+    if(char === "\\") {
+      let second = chars[pos++]!;
+      switch(second) {
+        case "n": out += "\n"; break;
+        case "r": out += "\r"; break;
+        case "t": out += "\t"; break;
+        case "\"": out += "\""; break;
+        case "'": out += "'"; break;
+        case "\\": out += "\\"; break;
+        case "u":
+          pos++; // skip '('
+          let num = "";
+          while(chars[pos] !== ")") {
+            num += chars[pos++];
+          }
+          pos++; // skip ')'
+          out += String.fromCodePoint(parseInt(num, 16));
+          break;
+        default: throw new ParserError(`Unknown escape character '\\${second}'`);
+      }
+    } else {
+      out += char;
+    }
+  }
+  return out;
+}
+
+// consume all space-characters at the start of the string, optionally throwing if none were found
+export function consumeSpaces(expr: string, required = false): string {
+  let spaceTest = expr.match(/^\s*/);
+  if(required && spaceTest![0].length === 0) throw new ParserError("Expected space after opcode, directive or macro");
+  return expr.slice(spaceTest![0].length);
 }

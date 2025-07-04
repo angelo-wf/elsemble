@@ -1,5 +1,6 @@
-import { consumeSpaces, ExpressionNode, parseExpression } from "./expressionparser.js";
-import { checkLabel, checkLineEnd, ParserError } from "./lineparser.js";
+import { ExpressionNode } from "./expressionparser.js";
+import { checkLineEnd, parseArgumentList, ParserError } from "./lineparser.js";
+import { consumeSpaces, tokenize, TokenType } from "./tokenizer.js";
 
 export enum Directive {
   IF = "if",
@@ -44,65 +45,57 @@ export enum Directive {
   SMART = "smart"
 };
 
-enum ArgumentType {
-  EXPR,
-  NAME,
-  BLOCKLBL,
-  LABEL
-};
-
 type DirectiveInfo<K> = {
   dir: K,
   minCount: number,
-  types: ArgumentType[],
-  variadicType?: ArgumentType
+  maxCount?: number
 };
 
 const directiveArgs: {[key in Directive]: DirectiveInfo<key>} = {
-  [Directive.IF]: {dir: Directive.IF, minCount: 1, types: [ArgumentType.EXPR]},
-  [Directive.IFDEF]: {dir: Directive.IFDEF, minCount: 1, types: [ArgumentType.LABEL]},
-  [Directive.IFNDEF]: {dir: Directive.IFNDEF, minCount: 1, types: [ArgumentType.LABEL]},
-  [Directive.ELIF]: {dir: Directive.ELIF, minCount: 1, types: [ArgumentType.EXPR]},
-  [Directive.ELSE]: {dir: Directive.ELSE, minCount: 0, types: []},
-  [Directive.ENDIF]: {dir: Directive.ENDIF, minCount: 0, types: []},
-  [Directive.REREAT]: {dir: Directive.REREAT, minCount: 1, types: [ArgumentType.EXPR, ArgumentType.BLOCKLBL]},
-  [Directive.ENDREPEAT]: {dir: Directive.ENDREPEAT, minCount: 0, types: []},
-  [Directive.MACRO]: {dir: Directive.MACRO, minCount: 1, types: [ArgumentType.NAME], variadicType: ArgumentType.BLOCKLBL},
-  [Directive.ENDMACRO]: {dir: Directive.ENDMACRO, minCount: 0, types: []},
-  [Directive.INCLUDE]: {dir: Directive.INCLUDE, minCount: 1, types: [ArgumentType.EXPR]},
-  [Directive.ORG]: {dir: Directive.ORG, minCount: 1, types: [ArgumentType.EXPR]},
-  [Directive.FILLBYTE]: {dir: Directive.FILLBYTE, minCount: 1, types: [ArgumentType.EXPR]},
-  [Directive.PAD]: {dir: Directive.PAD, minCount: 1, types: [ArgumentType.EXPR, ArgumentType.EXPR]},
-  [Directive.FILL]: {dir: Directive.FILL, minCount: 1, types: [ArgumentType.EXPR, ArgumentType.EXPR]},
-  [Directive.ALIGN]: {dir: Directive.ALIGN, minCount: 1, types: [ArgumentType.EXPR, ArgumentType.EXPR]},
-  [Directive.RPAD]: {dir: Directive.RPAD, minCount: 1, types: [ArgumentType.EXPR]},
-  [Directive.RES]: {dir: Directive.RES, minCount: 1, types: [ArgumentType.EXPR]},
-  [Directive.RALIGN]: {dir: Directive.RALIGN, minCount: 1, types: [ArgumentType.EXPR]},
-  [Directive.DB]: {dir: Directive.DB, minCount: 1, types: [ArgumentType.EXPR], variadicType: ArgumentType.EXPR},
-  [Directive.DW]: {dir: Directive.DW, minCount: 1, types: [ArgumentType.EXPR], variadicType: ArgumentType.EXPR},
-  [Directive.DL]: {dir: Directive.DL, minCount: 1, types: [ArgumentType.EXPR], variadicType: ArgumentType.EXPR},
-  [Directive.DLB]: {dir: Directive.DLB, minCount: 1, types: [ArgumentType.EXPR], variadicType: ArgumentType.EXPR},
-  [Directive.DHB]: {dir: Directive.DHB, minCount: 1, types: [ArgumentType.EXPR], variadicType: ArgumentType.EXPR},
-  [Directive.DBB]: {dir: Directive.DBB, minCount: 1, types: [ArgumentType.EXPR], variadicType: ArgumentType.EXPR},
-  [Directive.DLW]: {dir: Directive.DLW, minCount: 1, types: [ArgumentType.EXPR], variadicType: ArgumentType.EXPR},
-  [Directive.INCBIN]: {dir: Directive.INCBIN, minCount: 1, types: [ArgumentType.EXPR, ArgumentType.EXPR, ArgumentType.EXPR]},
-  [Directive.SCOPE]: {dir: Directive.SCOPE, minCount: 1, types: [ArgumentType.NAME]},
-  [Directive.ENDSCOPE]: {dir: Directive.ENDSCOPE, minCount: 0, types: []},
-  [Directive.ASSERT]: {dir: Directive.ASSERT, minCount: 2, types: [ArgumentType.EXPR, ArgumentType.EXPR]},
-  [Directive.CHARMAP]: {dir:Directive.CHARMAP, minCount: 2, types: [ArgumentType.EXPR, ArgumentType.EXPR]},
-  [Directive.CLRCHARMAP]: {dir: Directive.CLRCHARMAP, minCount: 0, types: []},
-  [Directive.ARCH]: {dir: Directive.ARCH, minCount: 1, types: [ArgumentType.NAME]},
-  [Directive.DIRPAGE]: {dir: Directive.DIRPAGE, minCount: 1, types: [ArgumentType.EXPR]},
-  [Directive.BANK]: {dir: Directive.BANK, minCount: 1, types: [ArgumentType.EXPR]},
-  [Directive.ASIZE]: {dir: Directive.ASIZE, minCount: 1, types: [ArgumentType.EXPR]},
-  [Directive.ISIZE]: {dir: Directive.ISIZE, minCount: 1, types: [ArgumentType.EXPR]},
-  [Directive.MIRROR]: {dir: Directive.MIRROR, minCount: 4, types: [ArgumentType.EXPR, ArgumentType.EXPR, ArgumentType.EXPR, ArgumentType.EXPR, ArgumentType.EXPR]},
-  [Directive.CLRMIRROR]: {dir: Directive.CLRMIRROR, minCount: 0, types: []},
-  [Directive.SMART]: {dir: Directive.SMART, minCount: 1, types: [ArgumentType.NAME]}
+  [Directive.IF]: {dir: Directive.IF, minCount: 1, maxCount: 1},
+  [Directive.IFDEF]: {dir: Directive.IFDEF, minCount: 1, maxCount: 1},
+  [Directive.IFNDEF]: {dir: Directive.IFNDEF, minCount: 1, maxCount: 1},
+  [Directive.ELIF]: {dir: Directive.ELIF, minCount: 1, maxCount: 1},
+  [Directive.ELSE]: {dir: Directive.ELSE, minCount: 0, maxCount: 0},
+  [Directive.ENDIF]: {dir: Directive.ENDIF, minCount: 0, maxCount: 0},
+  [Directive.REREAT]: {dir: Directive.REREAT, minCount: 1, maxCount: 2},
+  [Directive.ENDREPEAT]: {dir: Directive.ENDREPEAT, minCount: 0, maxCount: 0},
+  [Directive.MACRO]: {dir: Directive.MACRO, minCount: 1},
+  [Directive.ENDMACRO]: {dir: Directive.ENDMACRO, minCount: 0, maxCount: 0},
+  [Directive.INCLUDE]: {dir: Directive.INCLUDE, minCount: 1, maxCount: 1},
+  [Directive.ORG]: {dir: Directive.ORG, minCount: 1, maxCount: 1},
+  [Directive.FILLBYTE]: {dir: Directive.FILLBYTE, minCount: 1, maxCount: 1},
+  [Directive.PAD]: {dir: Directive.PAD, minCount: 1, maxCount: 2},
+  [Directive.FILL]: {dir: Directive.FILL, minCount: 1, maxCount: 2},
+  [Directive.ALIGN]: {dir: Directive.ALIGN, minCount: 1, maxCount: 2},
+  [Directive.RPAD]: {dir: Directive.RPAD, minCount: 1, maxCount: 1},
+  [Directive.RES]: {dir: Directive.RES, minCount: 1, maxCount: 1},
+  [Directive.RALIGN]: {dir: Directive.RALIGN, minCount: 1, maxCount: 1},
+  [Directive.DB]: {dir: Directive.DB, minCount: 1},
+  [Directive.DW]: {dir: Directive.DW, minCount: 1},
+  [Directive.DL]: {dir: Directive.DL, minCount: 1},
+  [Directive.DLB]: {dir: Directive.DLB, minCount: 1},
+  [Directive.DHB]: {dir: Directive.DHB, minCount: 1},
+  [Directive.DBB]: {dir: Directive.DBB, minCount: 1},
+  [Directive.DLW]: {dir: Directive.DLW, minCount: 1},
+  [Directive.INCBIN]: {dir: Directive.INCBIN, minCount: 1, maxCount: 3},
+  [Directive.SCOPE]: {dir: Directive.SCOPE, minCount: 1, maxCount: 1},
+  [Directive.ENDSCOPE]: {dir: Directive.ENDSCOPE, minCount: 0, maxCount: 0},
+  [Directive.ASSERT]: {dir: Directive.ASSERT, minCount: 2, maxCount: 2},
+  [Directive.CHARMAP]: {dir:Directive.CHARMAP, minCount: 2, maxCount: 2},
+  [Directive.CLRCHARMAP]: {dir: Directive.CLRCHARMAP, minCount: 0, maxCount: 0},
+  [Directive.ARCH]: {dir: Directive.ARCH, minCount: 1, maxCount: 1},
+  [Directive.DIRPAGE]: {dir: Directive.DIRPAGE, minCount: 1, maxCount: 1},
+  [Directive.BANK]: {dir: Directive.BANK, minCount: 1, maxCount: 1},
+  [Directive.ASIZE]: {dir: Directive.ASIZE, minCount: 1, maxCount: 1},
+  [Directive.ISIZE]: {dir: Directive.ISIZE, minCount: 1, maxCount: 1},
+  [Directive.MIRROR]: {dir: Directive.MIRROR, minCount: 4, maxCount: 5},
+  [Directive.CLRMIRROR]: {dir: Directive.CLRMIRROR, minCount: 0, maxCount: 0},
+  [Directive.SMART]: {dir: Directive.SMART, minCount: 1, maxCount: 1}
 };
 
-// parse a directive line, giving the directive and list of arguments (type depends on specifief type for directive)
-export function parseDirectiveLine(directive: string, line: string): [(ExpressionNode | string)[], Directive] {
+// parse a directive line, giving the directive and list of arguments
+export function parseDirectiveLine(directive: string, line: string): [ExpressionNode[], Directive] {
   let info = (directiveArgs as {[p: string]: DirectiveInfo<Directive>})[directive];
   if(!info) {
     throw new ParserError(`Unknown directive '.${directive}'`);
@@ -115,52 +108,10 @@ export function parseDirectiveLine(directive: string, line: string): [(Expressio
   // check for required space after it
   line = consumeSpaces(line, true);
   // parse arguments
-  let expectComma = false;
-  let args: (ExpressionNode | string)[] = [];
-  while(true) {
-    line = consumeSpaces(line);
-    if(expectComma) {
-      if(!line.startsWith(",")) {
-        // no comma, must be end of argument list
-        break;
-      }
-      line = line.slice(1);
-      expectComma = false;
-    } else {
-      // get next type
-      let type = args.length >= info.types.length ? info.variadicType : info.types[args.length];
-      if(type === undefined) throw new ParserError("Too many arguments");
-      let arg: ExpressionNode | string;
-      // and parse it
-      switch(type) {
-        case ArgumentType.EXPR: [arg, line] = parseExpression(line); break;
-        case ArgumentType.NAME: [arg, line] = parseNonExprArg(line, false); break;
-        case ArgumentType.BLOCKLBL: [arg, line] = parseNonExprArg(line, true); break;
-        case ArgumentType.LABEL: [arg, line] = parseLabel(line); break;
-        default: throw (type satisfies never);
-      }
-      args.push(arg);
-      expectComma = true;
-    }
-  }
+  let [args, tokensLeft] = parseArgumentList(tokenize(line));
   // check for line end after
-  if(!checkLineEnd(line)) throw new ParserError("Trailing characters after expression");
+  if(tokensLeft[0]!.type !== TokenType.EOF) throw new ParserError("Trailing characters after expression");
+  if(info.maxCount !== undefined && args.length > info.maxCount) throw new ParserError("Too many arguments");
   if(args.length < info.minCount) throw new ParserError("Too few arguments");
   return [args, dir];
-}
-
-function parseNonExprArg(line: string, isBlockLabel: boolean): [string, string] {
-  let test = line.match(isBlockLabel ? /^@[A-Za-z_]\w*/ : /^[A-Za-z_]\w*/);
-  if(test) {
-    return [test[0], line.slice(test[0].length)];
-  }
-  throw new ParserError(`Expected ${isBlockLabel ? "block label" : "name"} as argument`);
-}
-
-function parseLabel(line: string): [string, string] {
-  let test = line.match(/^[\w@\.:]+/);
-  if(test) {
-    return [checkLabel(test[0]), line.slice(test[0].length)];
-  }
-  throw new ParserError(`Expected label as argument`);
 }

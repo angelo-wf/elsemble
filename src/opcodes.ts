@@ -3,6 +3,7 @@ import { createSpc700Map } from "./architectures/spc700.js";
 import { createW65816Map } from "./architectures/w65816.js";
 import { ExpressionNode, parseExpression } from "./expressionparser.js";
 import { ParserError } from "./lineparser.js";
+import { eofToken, Token, tokenize, TokenType } from "./tokenizer.js";
 
 export enum Architecture {
   M6502 = "m6502",
@@ -42,7 +43,8 @@ export enum SpecialOp {
 };
 
 export type OpcodeInfo = {
-  regex: RegExp,
+  match?: string[][],
+  regex: RegExp, // TODO: allow regex still, and have match be optional
   adrs: AdrMode[],
   vals: (number | number[])[],
   argMap: number[],
@@ -70,17 +72,17 @@ export function parseArchitecture(name: string): Architecture {
 }
 
 // parse opcode line, giving parsed expressions and which adressing mode index it is
-export function parseOpcode(arch: Architecture, opcode: string, argument: string): [ExpressionNode[], number] {
+export function parseOpcode(arch: Architecture, opcode: string, argument: Token[]): [ExpressionNode[], number] {
   let tests = opcodes[arch].opMap[opcode];
   if(!tests) throw new ParserError(`Unknown opcode '${opcode}'`);
   for(let i = 0; i < tests.length; i++) {
     let test = tests[i]!;
-    let result = argument.match(test.regex);
+    let result = matchArg(argument, test.match!);
     if(result) {
       let args: ExpressionNode[] = [];
       for(let i = 0; i < test.adrs.length; i++) {
-        let [node, rest] = parseExpression(result[i + 1]!);
-        if(rest.length > 0) throw new ParserError("Trailing characters after expression");
+        let [node, rest] = parseExpression(result[i]!);
+        if(rest[0]!.type !== TokenType.EOF) throw new ParserError("Trailing characters after expression");
         args.push(node);
       }
       return [args, i];
@@ -100,4 +102,43 @@ export function addItem(map: OpcodeMap, name: string, item: OpcodeInfo): void {
     map[name] = [];
   }
   map[name]!.push(item);
+}
+
+// create matcher from string array (needs at least one string)
+export function matcher(...tests: string[]): string[][] {
+  let matchers = tests.map(t => tokenize(t).map(t => t.raw).slice(0, -1));
+  matchers.at(-1)!.push("\n");
+  return matchers;
+}
+
+// TODO: export temporarily
+export function matchArg(tokens: Token[], matches: string[][]): Token[][] | undefined {
+  let output: Token[][] = [];
+  let pos = 0;
+  // match first item ahead of loop
+  if(!checkArgsMatch(tokens, matches[0]!, pos)) return undefined;
+  for(let i = 0; i < matches.length; i++) {
+    let match = matches[i]!;
+    pos += match.length;
+    // matched, if last one, exit (last one has \n as part, so also checks for end of expression)
+    if(i === matches.length - 1) {
+      break;
+    }
+    // scan for next match and get output between them
+    let valueStart = pos;
+    while(!checkArgsMatch(tokens, matches[i + 1]!, pos)) {
+      pos++;
+      if(pos === tokens.length) return undefined;
+    }
+    output.push([...tokens.slice(valueStart, pos), eofToken]);
+  }
+  return output;
+}
+
+function checkArgsMatch(tokens: Token[], match: string[], pos: number): boolean {
+  // check that tokens match starting at pos
+  for(let i = 0; i < match.length; i++) {
+    if(tokens[pos++]!.raw.toLowerCase() !== match[i]) return false;
+  }
+  return true;
 }

@@ -1,6 +1,7 @@
 import { Directive, parseDirectiveLine } from "./directives.js";
-import { cleanExpression, consumeSpaces, ExpressionNode, parseExpression } from "./expressionparser.js";
+import { ExpressionNode, parseExpression } from "./expressionparser.js";
 import { Architecture, parseOpcode } from "./opcodes.js";
+import { consumeSpaces, eofToken, Token, tokenize, TokenType } from "./tokenizer.js";
 
 export class ParserError extends Error {
   constructor(message: string, options?: ErrorOptions) {
@@ -36,7 +37,7 @@ export type Line = {
 } | {
   type: LineType.DIRECTIVE,
   directive: Directive,
-  arguments: (ExpressionNode | string)[]
+  arguments: ExpressionNode[]
 } | {
   type: LineType.MACRO,
   macro: string,
@@ -52,8 +53,8 @@ export function parseLine(line: string, arch?: Architecture): Line {
     let [match, assigned, op] = assignmentTest;
     let reassignment = op === ":=";
     // parse expression for value and check that line ends after
-    let [value, lineLeft] = parseExpression(line.slice(match.length));
-    if(!checkLineEnd(lineLeft)) throw new ParserError("Trailing characters after expression");
+    let [value, lineLeft] = parseExpression(tokenize(line.slice(match.length)));
+    if(lineLeft[0]!.type !== TokenType.EOF) throw new ParserError("Trailing characters after expression");
     return {type: LineType.ASSIGNMENT, label: checkLabel(assigned!), reassignment, value, raw};
   }
   // check for and get label
@@ -73,8 +74,9 @@ export function parseLine(line: string, arch?: Architecture): Line {
       if(!checkLineEnd(argumentStr)) {
         // check for required space after it
         argumentStr = consumeSpaces(argumentStr, true);
-        [args, argumentStr] = parseArgumentList(argumentStr);
-        if(!checkLineEnd(argumentStr)) throw new ParserError("Trailing characters after expression");
+        let tokensLeft: Token[] = [];
+        [args, tokensLeft] = parseArgumentList(tokenize(argumentStr));
+        if(tokensLeft[0]!.type !== TokenType.EOF) throw new ParserError("Trailing characters after expression");
       }
       return {type: LineType.MACRO, label, macro: directive.slice(1), arguments: args, raw};
     } else {
@@ -87,16 +89,16 @@ export function parseLine(line: string, arch?: Architecture): Line {
   if(opcodeTest) {
     let opcode = opcodeTest[1]!.toLowerCase();
     let argString = line.slice(opcodeTest[0].length);
-    let argumentStr: string;
+    let argumentTokens: Token[];
     if(checkLineEnd(argString)) {
-      argumentStr = "";
+      argumentTokens = [eofToken];
     } else {
       // check for space after opcode
       argString = consumeSpaces(argString, true);
-      argumentStr = cleanExpression(argString);
+      argumentTokens = tokenize(argString);
     }
     if(!arch) throw new ParserError("Opcode encuntered without architecture set");
-    let [args, modeNum] = parseOpcode(arch, opcode, argumentStr);
+    let [args, modeNum] = parseOpcode(arch, opcode, argumentTokens);
     return {type: LineType.OPCODE, label, opcode, arguments: args, modeNum, arch, raw};
   }
   // check if it is empty
@@ -107,13 +109,12 @@ export function parseLine(line: string, arch?: Architecture): Line {
 }
 
 // parse a list of expressions split by commas, returning a list of nodes and the remaining string (spaces consumed)
-export function parseArgumentList(line: string): [ExpressionNode[], string] {
+export function parseArgumentList(line: Token[]): [ExpressionNode[], Token[]] {
   let expectComma = false;
   let args: ExpressionNode[] = [];
   while(true) {
-    line = consumeSpaces(line);
     if(expectComma) {
-      if(!line.startsWith(",")) {
+      if(line[0]!.raw !== ",") {
         // no comma, must be end of argument list
         return [args, line];
       }
