@@ -159,6 +159,71 @@ export function createM6502Map(): OpcodeMap {
   addImpli(map, "inx", regImpl, 0xe8);
   addImpli(map, "sed", regImpl, 0xf8);
 
+  addZpage(map, "slo", regIndX, 0x03);
+  addZpage(map, "slo", regIndY, 0x13);
+  addZpAbs(map, "slo", regAdrX, 0x17, 0x1f);
+  addAbsol(map, "slo", regAdrY, 0x1b);
+  addZpAbs(map, "slo", regAdrs, 0x07, 0x0f);
+
+  addZpage(map, "rla", regIndX, 0x23);
+  addZpage(map, "rla", regIndY, 0x33);
+  addZpAbs(map, "rla", regAdrX, 0x37, 0x3f);
+  addAbsol(map, "rla", regAdrY, 0x3b);
+  addZpAbs(map, "rla", regAdrs, 0x27, 0x2f);
+
+  addZpage(map, "sre", regIndX, 0x43);
+  addZpage(map, "sre", regIndY, 0x53);
+  addZpAbs(map, "sre", regAdrX, 0x57, 0x5f);
+  addAbsol(map, "sre", regAdrY, 0x5b);
+  addZpAbs(map, "sre", regAdrs, 0x47, 0x4f);
+
+  addZpage(map, "rra", regIndX, 0x63);
+  addZpage(map, "rra", regIndY, 0x73);
+  addZpAbs(map, "rra", regAdrX, 0x77, 0x7f);
+  addAbsol(map, "rra", regAdrY, 0x7b);
+  addZpAbs(map, "rra", regAdrs, 0x67, 0x6f);
+
+  addZpage(map, "sax", regIndX, 0x83);
+  addZpage(map, "sax", regAdrY, 0x97);
+  addZpAbs(map, "sax", regAdrs, 0x87, 0x8f);
+
+  addZpage(map, "lax", regIndX, 0xa3);
+  addZpage(map, "lax", regIndY, 0xb3);
+  addZpAbs(map, "lax", regAdrY, 0xb7, 0xbf);
+  addZpAbs(map, "lax", regAdrs, 0xa7, 0xaf);
+
+  addZpage(map, "dcp", regIndX, 0xc3);
+  addZpage(map, "dcp", regIndY, 0xd3);
+  addZpAbs(map, "dcp", regAdrX, 0xd7, 0xdf);
+  addAbsol(map, "dcp", regAdrY, 0xdb);
+  addZpAbs(map, "dcp", regAdrs, 0xc7, 0xcf);
+
+  addZpage(map, "isc", regIndX, 0xe3);
+  addZpage(map, "isc", regIndY, 0xf3);
+  addZpAbs(map, "isc", regAdrX, 0xf7, 0xff);
+  addAbsol(map, "isc", regAdrY, 0xfb);
+  addZpAbs(map, "isc", regAdrs, 0xe7, 0xef);
+
+  addImmid(map, "anc", regImmi, 0x0b);
+  addImmid(map, "alr", regImmi, 0x4b);
+  addImmid(map, "arr", regImmi, 0x6b);
+  addImmid(map, "axs", regImmi, 0xcb);
+
+  addZpage(map, "ahx", regIndY, 0x93);
+  addAbsol(map, "ahx", regAdrY, 0x9f);
+  addAbsol(map, "shy", regAdrX, 0x9c);
+  addAbsol(map, "shx", regAdrY, 0x9e);
+  addImmid(map, "xaa", regImmi, 0x8b);
+  addAbsol(map, "tas", regAdrY, 0x9b);
+  addImmid(map, "lxa", regImmi, 0xab);
+  addAbsol(map, "las", regAdrY, 0xbb);
+
+  addImpli(map, "stp", regImpl, 0x02);
+
+  addImmid(map, "nop", regImmi, 0x80);
+  addZpAbs(map, "nop", regAdrX, 0x14, 0x1c);
+  addZpAbs(map, "nop", regAdrs, 0x04, 0x0c);
+
   return map;
 }
 

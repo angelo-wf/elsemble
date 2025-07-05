@@ -10,6 +10,7 @@ rti
 bvc * + $14
 rts
 bvs * + $14
+nop #$12
 bcc * + $14
 ldy #$12
 bcs * + $14
@@ -35,8 +36,28 @@ cmp ($12), y
 sbc ($12, x)
 sbc ($12), y
 
+stp
 ldx #$12
 
+slo ($12, x)
+slo ($12), y
+rla ($12, x)
+rla ($12), y
+sre ($12, x)
+sre ($12), y
+rra ($12, x)
+rra ($12), y
+sax ($12, x)
+ahx ($12), y
+lax ($12, x)
+lax ($12), y
+dcp ($12, x)
+dcp ($12), y
+isc ($12, x)
+isc ($12), y
+
+nop $12
+nop $12, x
 bit $12
 sty $12
 sty $12, x
@@ -78,6 +99,23 @@ dec $12
 dec $12, x
 inc $12
 inc $12, x
+
+slo $12
+slo $12, x
+rla $12
+rla $12, x
+sre $12
+sre $12, x
+rra $12
+rra $12, x
+sax $12
+sax $12, y
+lax $12
+lax $12, y
+dcp $12
+dcp $12, x
+isc $12
+isc $12, x
 
 php
 clc
@@ -123,10 +161,28 @@ tsx
 dex
 nop
 
+anc #$12
+slo $1234, y
+rla $1234, y
+alr #$12
+sre $1234, y
+arr #$12
+rra $1234, y
+xaa #$12
+tas $1234, y
+lxa #$12
+las $1234, y
+axs #$12
+dcp $1234, y
+isc $1234, y
+
+nop $1234
+nop $1234, x
 bit $1234
 jmp $1234
 jmp ($1234)
 sty $1234
+shy $1234, x
 ldy $1234
 ldy $1234, x
 cpy $1234
@@ -158,12 +214,30 @@ lsr $1234, x
 ror $1234
 ror $1234, x
 stx $1234
+shx $1234, y
 ldx $1234
 ldx $1234, y
 dec $1234
 dec $1234, x
 inc $1234
 inc $1234, x
+
+slo $1234
+slo $1234, x
+rla $1234
+rla $1234, x
+sre $1234
+sre $1234, x
+rra $1234
+rra $1234, x
+sax $1234
+ahx $1234, y
+lax $1234
+lax $1234, y
+dcp $1234
+dcp $1234, x
+isc $1234
+isc $1234, x
 
 ; alt forms
 asl a

@@ -37,7 +37,8 @@ val3:=3
 .db val3
 .db "abc; no comment"; comment
 .db ';', ',', 'a', '\'', 2
-.db "\"\',\\\r\n\t\u(63)" ; "comment"
+.db "\"\',\\\r\n\t\u{63}" ; "comment"
+.db '\u{42}'
 
 ; expression tests
 

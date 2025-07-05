@@ -77,7 +77,7 @@ Strings and character constants support escape sequences within them using a bac
 - `\"`: double quote
 - `\'`: single quote
 - `\\`: backslash
-- `\u(<value>)`: the Unicode charcter with hexadecimal codepoint `<value>`
+- `\u{<value>}`: the Unicode charcter with hexadecimal codepoint `<value>`
 
 The characters for character constants are mapped according to the currently set character mapping.
 
@@ -177,7 +177,7 @@ Absolute paths (starting with `/` (optionally preceded by a drive letter + colon
 
 The PC can be set or moved without emitting bytes:
 
-- `.org <location>`: Sets the PC to `location`, without any checks.
+- `.org <location>`: Sets the PC to `location`, without any checks. The PC starts at 0.
 - `.res <amount>`: Reservers `amount` bytes of space, moving the PC forwards `amount` bytes.
 - `.rpad <location>`: Moves the PC forwards to `location`, giving an error if it has to go backwards.
 - `.align <value>`: Moves the PC to a multiple of `value`.
@@ -232,7 +232,7 @@ The current architecture and options relating to architectures can be set:
 Additionally, some architecture-specific directives exist, which are listed in the section about each architecture. These values are set per architecture and not shared between them.
 
 The following architectures are valid:
-- `m6502`: Assembles for the MOS 6502. Only documented opcodes are implemented.
+- `m6502`: Assembles for the MOS 6502.
 - `w65816`: Assembles for the WDC 65816.
 - `spc700`: Assembles for Sony's SPC700 core.
 
@@ -245,6 +245,14 @@ The assembler follows the general conventions for 6502 syntax. The following thi
   - A `.a` postfix on the opcode can be used to force absolute addressing when zeropage would otherwise be used.
 - The `a` for accumulator addressing is optional (`lsr a` and `lsr` are equivalent).
 - `brk` has an optional immediate argument. If provided, it is assembled as a 2-byte opcode using the argument instead of an one-byte opcode.
+- Undocumented opcodes are supported, using the following mnemonics:
+  - ALU + RMW opcodes: `sla`, `rlo`, `sre`, `rra`, `sax`, `lax`, `dcp`, `isc`.
+  - IMM + RMW opcodes: `anc` (0B), `alr` (4B), `arr` (6B), `axs` (CB).
+  - The opcodes that work somewhat illogically: `ahx` (93/9F), `shy` (9C), `shx` (9E), `tas` (9B), `las` (BB).
+  - The 'unstable' opcodes: `xaa` (8B) and `lxa` (AB) (`lxa` is used for the opcode that 'should be' `lax #imm`).
+  - `nop`-variants are differentiated by using `nop` with arguments.
+  - `stp` is used for the opcode that freezes the CPU.
+  - For opcodes with mulitple encoding, the encoding with the lowest opcode-value is used.
 
 ### WDC 65816
 

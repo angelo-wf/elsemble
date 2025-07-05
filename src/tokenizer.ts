@@ -35,14 +35,14 @@ export function tokenize(input: string): Token[] {
       break;
     }
     // test for string
-    let stringTest = input.match(/^"((?:[^\\"]|\\[^u]|\\u\([\da-fA-F]+\))*)"/);
+    let stringTest = input.match(/^"((?:[^\\"]|\\[^u]|\\u\{[\da-fA-F]+\})*)"/);
     if(stringTest) {
       tokens.push({type: TokenType.STRING, raw: stringTest[0], value: handleStringEscapes(stringTest[1]!)});
       input = input.slice(stringTest[0].length);
       continue;
     }
     // test for character constant
-    let charTest = input.match(/^'([^\\"]|\\[^u]|\\u\([\da-fA-F]+\))'/);
+    let charTest = input.match(/^'([^\\"]|\\[^u]|\\u\{[\da-fA-F]+\})'/);
     if(charTest) {
       tokens.push({type: TokenType.CHAR, raw: charTest[0], value: handleStringEscapes(charTest[1]!)});
       input = input.slice(charTest[0].length);
@@ -98,12 +98,12 @@ function handleStringEscapes(str: string): string {
         case "'": out += "'"; break;
         case "\\": out += "\\"; break;
         case "u":
-          pos++; // skip '('
+          pos++; // skip '{'
           let num = "";
-          while(chars[pos] !== ")") {
+          while(chars[pos] !== "}") {
             num += chars[pos++];
           }
-          pos++; // skip ')'
+          pos++; // skip '}'
           out += String.fromCodePoint(parseInt(num, 16));
           break;
         default: throw new ParserError(`Unknown escape character '\\${second}'`);
