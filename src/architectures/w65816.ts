@@ -1,19 +1,19 @@
-import { addItem, AdrMode, OpcodeMap, SpecialOp } from "../opcodes.js";
+import { addItem, AdrMode, matcher, OpcodeMap, SpecialOp } from "../opcodes.js";
 
-const regImpl = /^$/i;
-const regAccu = /^a?$/i;
-const regImmi = /^#(.+)$/i;
-const regIndX = /^\((.+),x\)$/i;
-const regInsy = /^\((.+),s\),y$/i;
-const regIndY = /^\((.+)\),y$/i;
-const regInlY = /^\[(.+)\],y$/i;
-const regIndi = /^\((.+)\)$/i;
-const regIndl = /^\[(.+)\]$/i;
-const regAdrS = /^(.+),s$/i;
-const regAdrX = /^(.+),x$/i;
-const regAdrY = /^(.+),y$/i;
-const regBmov = /^(.+),(.+)$/i;
-const regAdrs = /^(.+)$/i;
+const regImpl = matcher("");
+const regAccu = matcher("a");
+const regImmi = matcher("#", "");
+const regIndX = matcher("(", ",x)");
+const regInsy = matcher("(", ",s),y");
+const regIndY = matcher("(", "),y");
+const regInlY = matcher("[", "],y");
+const regIndi = matcher("(", ")");
+const regIndl = matcher("[", "]");
+const regAdrS = matcher("", ",s");
+const regAdrX = matcher("", ",x");
+const regAdrY = matcher("", ",y");
+const regBmov = matcher("", ",", "");
+const regAdrs = matcher("", "");
 
 export function createW65816Map(): OpcodeMap {
   let map: OpcodeMap = {};
@@ -113,18 +113,22 @@ export function createW65816Map(): OpcodeMap {
   addAbsol(map, "sbc", regAdrY, 0xf9);
   addDpAbL(map, "sbc", regAdrs, 0xe5, 0xed, 0xef);
 
+  addImpli(map, "asl", regImpl, 0x0a);
   addImpli(map, "asl", regAccu, 0x0a);
   addDpAbs(map, "asl", regAdrX, 0x16, 0x1e);
   addDpAbs(map, "asl", regAdrs, 0x06, 0x0e);
 
+  addImpli(map, "rol", regImpl, 0x2a);
   addImpli(map, "rol", regAccu, 0x2a);
   addDpAbs(map, "rol", regAdrX, 0x36, 0x3e);
   addDpAbs(map, "rol", regAdrs, 0x26, 0x2e);
 
+  addImpli(map, "lsr", regImpl, 0x4a);
   addImpli(map, "lsr", regAccu, 0x4a);
   addDpAbs(map, "lsr", regAdrX, 0x56, 0x5e);
   addDpAbs(map, "lsr", regAdrs, 0x46, 0x4e);
 
+  addImpli(map, "ror", regImpl, 0x6a);
   addImpli(map, "ror", regAccu, 0x6a);
   addDpAbs(map, "ror", regAdrX, 0x76, 0x7e);
   addDpAbs(map, "ror", regAdrs, 0x66, 0x6e);
@@ -136,10 +140,12 @@ export function createW65816Map(): OpcodeMap {
   addDpAbs(map, "ldx", regAdrY, 0xb6, 0xbe);
   addDpAbs(map, "ldx", regAdrs, 0xa6, 0xae);
 
+  addImpli(map, "dec", regImpl, 0x3a);
   addImpli(map, "dec", regAccu, 0x3a);
   addDpAbs(map, "dec", regAdrX, 0xd6, 0xde);
   addDpAbs(map, "dec", regAdrs, 0xc6, 0xce);
 
+  addImpli(map, "inc", regImpl, 0x1a);
   addImpli(map, "inc", regAccu, 0x1a);
   addDpAbs(map, "inc", regAdrX, 0xf6, 0xfe);
   addDpAbs(map, "inc", regAdrs, 0xe6, 0xee);
@@ -255,50 +261,50 @@ export function createW65816Map(): OpcodeMap {
   return map;
 }
 
-function addImpli(map: OpcodeMap, opcode: string, regex: RegExp, val: number): void {
-  addItem(map, opcode, {regex, adrs: [], vals: [val], argMap: [-1]});
+function addImpli(map: OpcodeMap, opcode: string, match: string[][], val: number): void {
+  addItem(map, opcode, {match, adrs: [], vals: [val], argMap: [-1]});
 }
 
-function addGener(map: OpcodeMap, opcode: string, regex: RegExp, val: number, mode: AdrMode, spc?: SpecialOp): void {
-  addItem(map, opcode, {regex, adrs: [mode], vals: [val], argMap: [-1, 1], spc});
+function addGener(map: OpcodeMap, opcode: string, match: string[][], val: number, mode: AdrMode, spc?: SpecialOp): void {
+  addItem(map, opcode, {match, adrs: [mode], vals: [val], argMap: [-1, 1], spc});
 }
 
-function addImmid(map: OpcodeMap, opcode: string, regex: RegExp, val: number, mode: AdrMode): void {
-  addItem(map, opcode, {regex, adrs: [mode], vals: [val], argMap: [-1, 1]});
-  addItem(map, opcode + ".b", {regex, adrs: [AdrMode.IMM8], vals: [val], argMap: [-1, 1]});
-  addItem(map, opcode + ".w", {regex, adrs: [AdrMode.IMM16], vals: [val], argMap: [-1, 1]});
+function addImmid(map: OpcodeMap, opcode: string, match: string[][], val: number, mode: AdrMode): void {
+  addItem(map, opcode, {match, adrs: [mode], vals: [val], argMap: [-1, 1]});
+  addItem(map, opcode + ".b", {match, adrs: [AdrMode.IMM8], vals: [val], argMap: [-1, 1]});
+  addItem(map, opcode + ".w", {match, adrs: [AdrMode.IMM16], vals: [val], argMap: [-1, 1]});
 }
 
-function addDpage(map: OpcodeMap, opcode: string, regex: RegExp, val: number): void {
-  addItem(map, opcode, {regex, adrs: [AdrMode.DP], vals: [val], argMap: [-1, 1]});
-  addItem(map, opcode + ".b", {regex, adrs: [AdrMode.IMM8P], vals: [val], argMap: [-1, 1]});
+function addDpage(map: OpcodeMap, opcode: string, match: string[][], val: number): void {
+  addItem(map, opcode, {match, adrs: [AdrMode.DP], vals: [val], argMap: [-1, 1]});
+  addItem(map, opcode + ".b", {match, adrs: [AdrMode.IMM8P], vals: [val], argMap: [-1, 1]});
 }
 
-function addDpAbs(map: OpcodeMap, opcode: string, regex: RegExp, vald: number, vala: number): void {
-  addItem(map, opcode, {regex, adrs: [AdrMode.DPABS], vals: [[vald, vala]], argMap: [-1, 1]});
-  addItem(map, opcode + ".b", {regex, adrs: [AdrMode.IMM8P], vals: [vald], argMap: [-1, 1]});
-  addItem(map, opcode + ".w", {regex, adrs: [AdrMode.IMM16P], vals: [vala], argMap: [-1, 1]});
-  addItem(map, opcode + ".a", {regex, adrs: [AdrMode.ABS], vals: [vala], argMap: [-1, 1]});
+function addDpAbs(map: OpcodeMap, opcode: string, match: string[][], vald: number, vala: number): void {
+  addItem(map, opcode, {match, adrs: [AdrMode.DPABS], vals: [[vald, vala]], argMap: [-1, 1]});
+  addItem(map, opcode + ".b", {match, adrs: [AdrMode.IMM8P], vals: [vald], argMap: [-1, 1]});
+  addItem(map, opcode + ".w", {match, adrs: [AdrMode.IMM16P], vals: [vala], argMap: [-1, 1]});
+  addItem(map, opcode + ".a", {match, adrs: [AdrMode.ABS], vals: [vala], argMap: [-1, 1]});
 }
 
-function addAbsol(map: OpcodeMap, opcode: string, regex: RegExp, val: number): void {
-  addItem(map, opcode, {regex, adrs: [AdrMode.ABS], vals: [val], argMap: [-1, 1]});
-  addItem(map, opcode + ".w", {regex, adrs: [AdrMode.IMM16P], vals: [val], argMap: [-1, 1]});
+function addAbsol(map: OpcodeMap, opcode: string, match: string[][], val: number): void {
+  addItem(map, opcode, {match, adrs: [AdrMode.ABS], vals: [val], argMap: [-1, 1]});
+  addItem(map, opcode + ".w", {match, adrs: [AdrMode.IMM16P], vals: [val], argMap: [-1, 1]});
 }
 
-function addDpAbL(map: OpcodeMap, opcode: string, regex: RegExp, vald: number, vala: number, vall: number): void {
-  addItem(map, opcode, {regex, adrs: [AdrMode.DPABSLONG], vals: [[vald, vala, vall]], argMap: [-1, 1]});
-  addItem(map, opcode + ".b", {regex, adrs: [AdrMode.IMM8P], vals: [vald], argMap: [-1, 1]});
-  addItem(map, opcode + ".w", {regex, adrs: [AdrMode.IMM16P], vals: [vala], argMap: [-1, 1]});
-  addItem(map, opcode + ".a", {regex, adrs: [AdrMode.ABS], vals: [vala], argMap: [-1, 1]});
-  addItem(map, opcode + ".l", {regex, adrs: [AdrMode.LONG], vals: [vall], argMap: [-1, 1]});
+function addDpAbL(map: OpcodeMap, opcode: string, match: string[][], vald: number, vala: number, vall: number): void {
+  addItem(map, opcode, {match, adrs: [AdrMode.DPABSLONG], vals: [[vald, vala, vall]], argMap: [-1, 1]});
+  addItem(map, opcode + ".b", {match, adrs: [AdrMode.IMM8P], vals: [vald], argMap: [-1, 1]});
+  addItem(map, opcode + ".w", {match, adrs: [AdrMode.IMM16P], vals: [vala], argMap: [-1, 1]});
+  addItem(map, opcode + ".a", {match, adrs: [AdrMode.ABS], vals: [vala], argMap: [-1, 1]});
+  addItem(map, opcode + ".l", {match, adrs: [AdrMode.LONG], vals: [vall], argMap: [-1, 1]});
 }
 
-function addAbsok(map: OpcodeMap, opcode: string, regex: RegExp, val: number): void {
-  addItem(map, opcode, {regex, adrs: [AdrMode.ABSK], vals: [val], argMap: [-1, 1]});
-  addItem(map, opcode + ".w", {regex, adrs: [AdrMode.IMM16P], vals: [val], argMap: [-1, 1]});
+function addAbsok(map: OpcodeMap, opcode: string, match: string[][], val: number): void {
+  addItem(map, opcode, {match, adrs: [AdrMode.ABSK], vals: [val], argMap: [-1, 1]});
+  addItem(map, opcode + ".w", {match, adrs: [AdrMode.IMM16P], vals: [val], argMap: [-1, 1]});
 }
 
-function addBlmov(map: OpcodeMap, opcode: string, regex: RegExp, val: number): void {
-  addItem(map, opcode, {regex, adrs: [AdrMode.IMM8P, AdrMode.IMM8P], vals: [val], argMap: [-1, 2, 1]});
+function addBlmov(map: OpcodeMap, opcode: string, match: string[][], val: number): void {
+  addItem(map, opcode, {match, adrs: [AdrMode.IMM8P, AdrMode.IMM8P], vals: [val], argMap: [-1, 2, 1]});
 }

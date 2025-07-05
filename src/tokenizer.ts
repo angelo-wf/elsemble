@@ -1,4 +1,4 @@
-import { BinaryOperator } from "./expressionparser.js";
+import { twoCharOps } from "./expressionparser.js";
 import { ParserError } from "./lineparser.js";
 
 export enum TokenType {
@@ -27,8 +27,6 @@ export const eofToken: Token = {type: TokenType.EOF, raw: "\n"};
 
 // tokenize a string into a list of tokens, ending with an EOF-token (handling comments)
 export function tokenize(input: string): Token[] {
-  // TODO: do this here now, as globally does not work (recursion in includes?)
-  const twoCharOps = Object.values(BinaryOperator).filter(v => v.length > 1) as string[];
   let tokens: Token[] = [];
   while(true) {
     input = consumeSpaces(input);

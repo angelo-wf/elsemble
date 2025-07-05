@@ -74,6 +74,8 @@ const UnaryOps: {[key in UnaryOperator]: OperatorInfo<key>} = {
   [UnaryOperator.LOWORD]: {op: UnaryOperator.LOWORD, level: 0}
 };
 
+export const twoCharOps = Object.values(BinaryOperator).filter(v => v.length > 1) as string[];
+
 export enum NodeType {
   ROOT,
   BINARY,

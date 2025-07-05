@@ -1,4 +1,6 @@
 
+.org 0
+
 .arch m6502
 
 lda $12
@@ -45,6 +47,13 @@ lda $810000
 lda $800000
 .clrmirror
 lda $800000
+
+.org $20000
+
+jmp $289ab
+jmp.w $1234
+jsr ($2cdef, x)
+jsr.w ($abcd, x)
 
 lda #0
 ldx #0

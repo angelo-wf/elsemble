@@ -1,9 +1,10 @@
-import { createM6502Map } from "./architectures/m6502.js";
-import { createSpc700Map } from "./architectures/spc700.js";
-import { createW65816Map } from "./architectures/w65816.js";
 import { ExpressionNode, parseExpression } from "./expressionparser.js";
 import { ParserError } from "./lineparser.js";
 import { eofToken, Token, tokenize, TokenType } from "./tokenizer.js";
+// these need to be imported last to prevent issues due to circular imports
+import { createM6502Map } from "./architectures/m6502.js";
+import { createSpc700Map } from "./architectures/spc700.js";
+import { createW65816Map } from "./architectures/w65816.js";
 
 export enum Architecture {
   M6502 = "m6502",
@@ -43,8 +44,7 @@ export enum SpecialOp {
 };
 
 export type OpcodeInfo = {
-  match?: string[][],
-  regex: RegExp, // TODO: allow regex still, and have match be optional
+  match: string[][],
   adrs: AdrMode[],
   vals: (number | number[])[],
   argMap: number[],
@@ -77,7 +77,7 @@ export function parseOpcode(arch: Architecture, opcode: string, argument: Token[
   if(!tests) throw new ParserError(`Unknown opcode '${opcode}'`);
   for(let i = 0; i < tests.length; i++) {
     let test = tests[i]!;
-    let result = matchArg(argument, test.match!);
+    let result = matchArg(argument, test.match);
     if(result) {
       let args: ExpressionNode[] = [];
       for(let i = 0; i < test.adrs.length; i++) {
@@ -111,8 +111,7 @@ export function matcher(...tests: string[]): string[][] {
   return matchers;
 }
 
-// TODO: export temporarily
-export function matchArg(tokens: Token[], matches: string[][]): Token[][] | undefined {
+function matchArg(tokens: Token[], matches: string[][]): Token[][] | undefined {
   let output: Token[][] = [];
   let pos = 0;
   // match first item ahead of loop

@@ -1,14 +1,14 @@
-import { addItem, AdrMode, OpcodeMap } from "../opcodes.js";
+import { addItem, AdrMode, matcher, OpcodeMap } from "../opcodes.js";
 
-const regImpl = /^$/i;
-const regAccu = /^a?$/i;
-const regImmi = /^#(.+)$/i;
-const regIndX = /^\((.+),x\)$/i;
-const regIndY = /^\((.+)\),y$/i;
-const regIndi = /^\((.+)\)$/i;
-const regAdrX = /^(.+),x$/i;
-const regAdrY = /^(.+),y$/i;
-const regAdrs = /^(.+)$/i;
+const regImpl = matcher("");
+const regAccu = matcher("a");
+const regImmi = matcher("#", "");
+const regIndX = matcher("(", ",x)");
+const regIndY = matcher("(", "),y");
+const regIndi = matcher("(", ")");
+const regAdrX = matcher("", ",x");
+const regAdrY = matcher("", ",y");
+const regAdrs = matcher("", "");
 
 export function createM6502Map(): OpcodeMap {
   let map: OpcodeMap = {};
@@ -68,18 +68,22 @@ export function createM6502Map(): OpcodeMap {
   addAbsol(map, "sbc", regAdrY, 0xf9);
   addZpAbs(map, "sbc", regAdrs, 0xe5, 0xed);
 
+  addImpli(map, "asl", regImpl, 0x0a);
   addImpli(map, "asl", regAccu, 0x0a);
   addZpAbs(map, "asl", regAdrX, 0x16, 0x1e);
   addZpAbs(map, "asl", regAdrs, 0x06, 0x0e);
 
+  addImpli(map, "rol", regImpl, 0x2a);
   addImpli(map, "rol", regAccu, 0x2a);
   addZpAbs(map, "rol", regAdrX, 0x36, 0x3e);
   addZpAbs(map, "rol", regAdrs, 0x26, 0x2e);
 
+  addImpli(map, "lsr", regImpl, 0x4a);
   addImpli(map, "lsr", regAccu, 0x4a);
   addZpAbs(map, "lsr", regAdrX, 0x56, 0x5e);
   addZpAbs(map, "lsr", regAdrs, 0x46, 0x4e);
 
+  addImpli(map, "ror", regImpl, 0x6a);
   addImpli(map, "ror", regAccu, 0x6a);
   addZpAbs(map, "ror", regAdrX, 0x76, 0x7e);
   addZpAbs(map, "ror", regAdrs, 0x66, 0x6e);
@@ -158,27 +162,27 @@ export function createM6502Map(): OpcodeMap {
   return map;
 }
 
-function addImpli(map: OpcodeMap, opcode: string, regex: RegExp, val: number): void {
-  addItem(map, opcode, {regex, adrs: [], vals: [val], argMap: [-1]});
+function addImpli(map: OpcodeMap, opcode: string, match: string[][], val: number): void {
+  addItem(map, opcode, {match, adrs: [], vals: [val], argMap: [-1]});
 }
 
-function addImmid(map: OpcodeMap, opcode: string, regex: RegExp, val: number): void {
-  addItem(map, opcode, {regex, adrs: [AdrMode.IMM8], vals: [val], argMap: [-1, 1]});
+function addImmid(map: OpcodeMap, opcode: string, match: string[][], val: number): void {
+  addItem(map, opcode, {match, adrs: [AdrMode.IMM8], vals: [val], argMap: [-1, 1]});
 }
 
-function addZpage(map: OpcodeMap, opcode: string, regex: RegExp, val: number): void {
-  addItem(map, opcode, {regex, adrs: [AdrMode.DP], vals: [val], argMap: [-1, 1]});
+function addZpage(map: OpcodeMap, opcode: string, match: string[][], val: number): void {
+  addItem(map, opcode, {match, adrs: [AdrMode.DP], vals: [val], argMap: [-1, 1]});
 }
 
-function addZpAbs(map: OpcodeMap, opcode: string, regex: RegExp, valz: number, vala: number): void {
-  addItem(map, opcode, {regex, adrs: [AdrMode.DPABS], vals: [[valz, vala]], argMap: [-1, 1]});
-  addItem(map, opcode + ".a", {regex, adrs: [AdrMode.ABS], vals: [vala], argMap: [-1, 1]});
+function addZpAbs(map: OpcodeMap, opcode: string, match: string[][], valz: number, vala: number): void {
+  addItem(map, opcode, {match, adrs: [AdrMode.DPABS], vals: [[valz, vala]], argMap: [-1, 1]});
+  addItem(map, opcode + ".a", {match, adrs: [AdrMode.ABS], vals: [vala], argMap: [-1, 1]});
 }
 
-function addAbsol(map: OpcodeMap, opcode: string, regex: RegExp, val: number): void {
-  addItem(map, opcode, {regex, adrs: [AdrMode.ABS], vals: [val], argMap: [-1, 1]});
+function addAbsol(map: OpcodeMap, opcode: string, match: string[][], val: number): void {
+  addItem(map, opcode, {match, adrs: [AdrMode.ABS], vals: [val], argMap: [-1, 1]});
 }
 
-function addRelat(map: OpcodeMap, opcode: string, regex: RegExp, val: number): void {
-  addItem(map, opcode, {regex, adrs: [AdrMode.REL8], vals: [val], argMap: [-1, 1]});
+function addRelat(map: OpcodeMap, opcode: string, match: string[][], val: number): void {
+  addItem(map, opcode, {match, adrs: [AdrMode.REL8], vals: [val], argMap: [-1, 1]});
 }
