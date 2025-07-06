@@ -5,16 +5,19 @@ import { eofToken, Token, tokenize, TokenType } from "./tokenizer.js";
 import { createM6502Map } from "./architectures/m6502.js";
 import { createSpc700Map } from "./architectures/spc700.js";
 import { createW65816Map } from "./architectures/w65816.js";
+import { createZ80Map } from "./architectures/z80.js";
 
 export enum Architecture {
   M6502 = "m6502",
   W65816 = "w65816",
-  SPC700 = "spc700"
+  SPC700 = "spc700",
+  Z80 = "z80"
 };
 
 export enum AdrMode {
   IMM8,
   IMM8P,
+  IMM8S,
   IMM16,
   IMM16P,
   IMM816A,
@@ -32,7 +35,8 @@ export enum AdrMode {
   IMM3PO,
   IMM3P,
   IMM4PO,
-  ABS13
+  ABS13,
+  RST
 };
 
 export enum SpecialOp {
@@ -61,7 +65,8 @@ type ArchInfo<K> = {
 const opcodes: {[key in Architecture]: ArchInfo<key>} = {
   [Architecture.M6502]: {arch: Architecture.M6502, opMap: createM6502Map()},
   [Architecture.W65816]: {arch: Architecture.W65816, opMap: createW65816Map()},
-  [Architecture.SPC700]: {arch: Architecture.SPC700, opMap: createSpc700Map()}
+  [Architecture.SPC700]: {arch: Architecture.SPC700, opMap: createSpc700Map()},
+  [Architecture.Z80]: {arch: Architecture.Z80, opMap: createZ80Map()}
 };
 
 // parse architecture, returns it or throws

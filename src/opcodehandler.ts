@@ -18,7 +18,8 @@ export class OpcodeHandler {
   private configs: {[key in Architecture]: ArchConfig} = {
     [Architecture.M6502]: {dirPage: 0, bank: 0, aSize: 8, iSize: 8, memMap: []},
     [Architecture.W65816]: {dirPage: 0, bank: 0, aSize: 8, iSize: 8, memMap: []},
-    [Architecture.SPC700]: {dirPage: 0, bank: 0, aSize: 8, iSize: 8, memMap: []}
+    [Architecture.SPC700]: {dirPage: 0, bank: 0, aSize: 8, iSize: 8, memMap: []},
+    [Architecture.Z80]: {dirPage: 0, bank: 0, aSize: 8, iSize: 8, memMap: []}
   };
   private smart = false;
 
@@ -51,7 +52,7 @@ export class OpcodeHandler {
       // handle opcode byte selection based on size
       if(adr === AdrMode.DPABS || adr === AdrMode.DPABSLONG) {
         byteNum = size - 1;
-      } else if(adr === AdrMode.IMM3PO || adr === AdrMode.IMM4PO) {
+      } else if(adr === AdrMode.IMM3PO || adr === AdrMode.IMM4PO || adr === AdrMode.RST) {
         byteNum = resVal;
       }
       vals.push([resVal, size]);
@@ -164,6 +165,7 @@ export class OpcodeHandler {
     switch(mode) {
       case AdrMode.IMM8: return this.adrImmediate(val, true, 8);
       case AdrMode.IMM8P: return this.adrImmediate(val, false, 8);
+      case AdrMode.IMM8S: return this.adrSignedImmediate(val);
       case AdrMode.IMM16: return this.adrImmediate(val, true, 16);
       case AdrMode.IMM16P: return this.adrImmediate(val, false, 16);
       case AdrMode.IMM816A: return this.adrImmediate(val, true, this.configs[arch].aSize);
@@ -182,6 +184,7 @@ export class OpcodeHandler {
       case AdrMode.IMM3P: return this.adrSmallImmediate(val, 3);
       case AdrMode.IMM4PO: return this.adrSmallImmediate(val, 4);
       case AdrMode.ABS13: return this.adrAbsBit(val, arch);
+      case AdrMode.RST: return this.adrRst(val);
       default: throw (mode satisfies never);
     }
   }
@@ -224,6 +227,15 @@ export class OpcodeHandler {
 
   private adrSmallImmediate(val: ExpressionResult, size: number): [number, number] {
     return [this.assembler.checkRange(val, false, size), 0];
+  }
+
+  private adrSignedImmediate(val: ExpressionResult): [number, number] {
+    let sVal = this.assembler.checkRange(val, true, 8);
+    if(sVal > 127) {
+      this.assembler.logError("Value out of range");
+      sVal = 127;
+    }
+    return [sVal, 1];
   }
 
   private adrAbsolute(val: ExpressionResult, bank: number, arch: Architecture): [number, number] {
@@ -286,5 +298,14 @@ export class OpcodeHandler {
     }
     this.assembler.logError("Address not reachable");
     return [0, 2];
+  }
+
+  private adrRst(val: ExpressionResult): [number, number] {
+    let rstVal = this.assembler.checkRange(val, false, 8);
+    if((rstVal & 7) !== 0 || (rstVal >> 3) > 7) {
+      this.assembler.logError("Invalid value");
+      rstVal = 0;
+    }
+    return [rstVal >> 3, 0];
   }
 }
