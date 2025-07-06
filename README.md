@@ -1,6 +1,6 @@
 # Elsemble
 
-A multipass assembler (currently) supporting the 6502, 65816 and spc700, written in Typescript.
+A multipass assembler (currently) supporting the 6502, 65816, SPC700 and Z80, written in Typescript.
 
 ## Compilng and running
 

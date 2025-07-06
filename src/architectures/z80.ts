@@ -6,6 +6,7 @@ const ixys: {r: string, p: number, o: number, q: number}[] = [
   {r: "ixh", p: 0xdd, o: 0, q: 0}, {r: "ixl", p: 0xdd, o: 1, q: 0},
   {r: "iyh", p: 0xfd, o: 0, q: 1}, {r: "iyl", p: 0xfd, o: 1, q: 1}
 ];
+const ixyRegs: string[] = [",b", ",c", ",d", ",e", ",h", ",l", "", ",a"];
 
 export function createZ80Map(): OpcodeMap {
   let map: OpcodeMap = {};
@@ -47,6 +48,8 @@ export function createZ80Map(): OpcodeMap {
   addGener(map, "ld", matcher("a,(", ")"), 0x3a, AdrMode.ABS);
   for(let [i, r] of regs.entries()) if(r !== "(hl)") addGene2(map, "ld", matcher("(ix", ")," + r), 0xdd, 0x70 + i, AdrMode.IMM8S);
   for(let [i, r] of regs.entries()) if(r !== "(hl)") addGene2(map, "ld", matcher("(iy", ")," + r), 0xfd, 0x70 + i, AdrMode.IMM8S);
+  addIxyIm(map, "ld", matcher("(ix", "),", ""), 0xdd);
+  addIxyIm(map, "ld", matcher("(iy", "),", ""), 0xfd);
   addGene2(map, "ld", matcher("(", "),bc"), 0xed, 0x43, AdrMode.ABS);
   addGene2(map, "ld", matcher("(", "),de"), 0xed, 0x53, AdrMode.ABS);
   addGener(map, "ld", matcher("(", "),hl"), 0x22, AdrMode.ABS);
@@ -62,15 +65,21 @@ export function createZ80Map(): OpcodeMap {
   addGene2(map, "ld", matcher("ix,", ""), 0xdd, 0x21, AdrMode.IMM16);
   addGene2(map, "ld", matcher("iy,", ""), 0xfd, 0x21, AdrMode.IMM16);
   addGener(map, "ld", matcher("sp,", ""), 0x31, AdrMode.IMM16);
-  addIxyIm(map, "ld", matcher("(ix", "),", ""), 0xdd);
-  addIxyIm(map, "ld", matcher("(iy", "),", ""), 0xfd);
 
   for(let [i, r] of regs.entries()) addImpli(map, "add", matcher("a," + r), 0x80 + i);
   for(let ixy of ixys) addImpl2(map, "add", matcher("a," + ixy.r), ixy.p, 0x84 + ixy.o);
   addImpli(map, "add", matcher("hl,bc"), 0x09);
+  addImpl2(map, "add", matcher("ix,bc"), 0xdd, 0x09);
+  addImpl2(map, "add", matcher("iy,bc"), 0xfd, 0x09);
   addImpli(map, "add", matcher("hl,de"), 0x19);
+  addImpl2(map, "add", matcher("ix,de"), 0xdd, 0x19);
+  addImpl2(map, "add", matcher("iy,de"), 0xfd, 0x19);
   addImpli(map, "add", matcher("hl,hl"), 0x29);
+  addImpl2(map, "add", matcher("ix,ix"), 0xdd, 0x29);
+  addImpl2(map, "add", matcher("iy,iy"), 0xfd, 0x29);
   addImpli(map, "add", matcher("hl,sp"), 0x39);
+  addImpl2(map, "add", matcher("ix,sp"), 0xdd, 0x39);
+  addImpl2(map, "add", matcher("iy,sp"), 0xfd, 0x39);
   addGene2(map, "add", matcher("a,(ix", ")"), 0xdd, 0x86, AdrMode.IMM8S);
   addGene2(map, "add", matcher("a,(iy", ")"), 0xfd, 0x86, AdrMode.IMM8S);
   addGener(map, "add", matcher("a,", ""), 0xc6, AdrMode.IMM8);
@@ -126,28 +135,62 @@ export function createZ80Map(): OpcodeMap {
   addGener(map, "cp", matcher("", ""), 0xfe, AdrMode.IMM8);
 
   for(let [i, r] of regs.entries()) addImpli(map, "inc", matcher(r), 0x04 + (i * 8));
+  for(let ixy of ixys) addImpl2(map, "inc", matcher(ixy.r), ixy.p, 0x24 + (ixy.o * 8));
   addImpli(map, "inc", matcher("bc"), 0x03);
   addImpli(map, "inc", matcher("de"), 0x13);
   addImpli(map, "inc", matcher("hl"), 0x23);
+  addImpl2(map, "inc", matcher("ix"), 0xdd, 0x23);
+  addImpl2(map, "inc", matcher("iy"), 0xfd, 0x23);
   addImpli(map, "inc", matcher("sp"), 0x33);
+  addGene2(map, "inc", matcher("(ix", ")"), 0xdd, 0x34, AdrMode.IMM8S);
+  addGene2(map, "inc", matcher("(iy", ")"), 0xfd, 0x34, AdrMode.IMM8S);
 
   for(let [i, r] of regs.entries()) addImpli(map, "dec", matcher(r), 0x05 + (i * 8));
+  for(let ixy of ixys) addImpl2(map, "dec", matcher(ixy.r), ixy.p, 0x25 + (ixy.o * 8));
   addImpli(map, "dec", matcher("bc"), 0x0b);
   addImpli(map, "dec", matcher("de"), 0x1b);
   addImpli(map, "dec", matcher("hl"), 0x2b);
+  addImpl2(map, "dec", matcher("ix"), 0xdd, 0x2b);
+  addImpl2(map, "dec", matcher("iy"), 0xfd, 0x2b);
   addImpli(map, "dec", matcher("sp"), 0x3b);
+  addGene2(map, "dec", matcher("(ix", ")"), 0xdd, 0x35, AdrMode.IMM8S);
+  addGene2(map, "dec", matcher("(iy", ")"), 0xfd, 0x35, AdrMode.IMM8S);
 
   for(let [i, r] of regs.entries()) addImpl2(map, "rlc", matcher(r), 0xcb, 0x00 + i);
+  for(let [i, r] of ixyRegs.entries()) addIxyBt(map, "rlc", matcher("(ix", ")" + r), 0xdd, 0x00 + i);
+  for(let [i, r] of ixyRegs.entries()) addIxyBt(map, "rlc", matcher("(iy", ")" + r), 0xfd, 0x00 + i);
   for(let [i, r] of regs.entries()) addImpl2(map, "rrc", matcher(r), 0xcb, 0x08 + i);
+  for(let [i, r] of ixyRegs.entries()) addIxyBt(map, "rrc", matcher("(ix", ")" + r), 0xdd, 0x08 + i);
+  for(let [i, r] of ixyRegs.entries()) addIxyBt(map, "rrc", matcher("(iy", ")" + r), 0xfd, 0x08 + i);
   for(let [i, r] of regs.entries()) addImpl2(map, "rl", matcher(r), 0xcb, 0x10 + i);
+  for(let [i, r] of ixyRegs.entries()) addIxyBt(map, "rl", matcher("(ix", ")" + r), 0xdd, 0x10 + i);
+  for(let [i, r] of ixyRegs.entries()) addIxyBt(map, "rl", matcher("(iy", ")" + r), 0xfd, 0x10 + i);
   for(let [i, r] of regs.entries()) addImpl2(map, "rr", matcher(r), 0xcb, 0x18 + i);
-  for(let [i, r] of regs.entries()) addImpl2(map, "sla", matcher(r), 0xcb, 0x20 + i);
-  for(let [i, r] of regs.entries()) addImpl2(map, "sra", matcher(r), 0xcb, 0x28 + i);
-  for(let [i, r] of regs.entries()) addImpl2(map, "sll", matcher(r), 0xcb, 0x30 + i);
-  for(let [i, r] of regs.entries()) addImpl2(map, "srl", matcher(r), 0xcb, 0x38 + i);
+  for(let [i, r] of ixyRegs.entries()) addIxyBt(map, "rr", matcher("(ix", ")" + r), 0xdd, 0x18 + i);
+  for(let [i, r] of ixyRegs.entries()) addIxyBt(map, "rr", matcher("(iy", ")" + r), 0xfd, 0x18 + i);
 
+  for(let [i, r] of regs.entries()) addImpl2(map, "sla", matcher(r), 0xcb, 0x20 + i);
+  for(let [i, r] of ixyRegs.entries()) addIxyBt(map, "sla", matcher("(ix", ")" + r), 0xdd, 0x20 + i);
+  for(let [i, r] of ixyRegs.entries()) addIxyBt(map, "sla", matcher("(iy", ")" + r), 0xfd, 0x20 + i);
+  for(let [i, r] of regs.entries()) addImpl2(map, "sra", matcher(r), 0xcb, 0x28 + i);
+  for(let [i, r] of ixyRegs.entries()) addIxyBt(map, "sra", matcher("(ix", ")" + r), 0xdd, 0x28 + i);
+  for(let [i, r] of ixyRegs.entries()) addIxyBt(map, "sra", matcher("(iy", ")" + r), 0xfd, 0x28 + i);
+  for(let [i, r] of regs.entries()) addImpl2(map, "sll", matcher(r), 0xcb, 0x30 + i);
+  for(let [i, r] of ixyRegs.entries()) addIxyBt(map, "sll", matcher("(ix", ")" + r), 0xdd, 0x30 + i);
+  for(let [i, r] of ixyRegs.entries()) addIxyBt(map, "sll", matcher("(iy", ")" + r), 0xfd, 0x30 + i);
+  for(let [i, r] of regs.entries()) addImpl2(map, "srl", matcher(r), 0xcb, 0x38 + i);
+  for(let [i, r] of ixyRegs.entries()) addIxyBt(map, "srl", matcher("(ix", ")" + r), 0xdd, 0x38 + i);
+  for(let [i, r] of ixyRegs.entries()) addIxyBt(map, "srl", matcher("(iy", ")" + r), 0xfd, 0x38 + i);
+
+  addBitXy(map, "bit", matcher("", ",(ix", ")"), 0xdd, 0x46);
+  addBitXy(map, "bit", matcher("", ",(iy", ")"), 0xfd, 0x46);
   for(let [i, r] of regs.entries()) addBitOp(map, "bit", matcher("", "," + r), 0x40 + i);
+
+  for(let [i, r] of ixyRegs.entries()) addBitXy(map, "res", matcher("", ",(ix", ")" + r), 0xdd, 0x80 + i);
+  for(let [i, r] of ixyRegs.entries()) addBitXy(map, "res", matcher("", ",(iy", ")" + r), 0xfd, 0x80 + i);
   for(let [i, r] of regs.entries()) addBitOp(map, "res", matcher("", "," + r), 0x80 + i);
+  for(let [i, r] of ixyRegs.entries()) addBitXy(map, "set", matcher("", ",(ix", ")" + r), 0xdd, 0xc0 + i);
+  for(let [i, r] of ixyRegs.entries()) addBitXy(map, "set", matcher("", ",(iy", ")" + r), 0xfd, 0xc0 + i);
   for(let [i, r] of regs.entries()) addBitOp(map, "set", matcher("", "," + r), 0xc0 + i);
 
   for(let [i, r] of regs.entries()) if(r !== "(hl)") addImpl2(map, "in", matcher(r + ",(c)"), 0xed, 0x40 + (i * 8));
@@ -161,13 +204,19 @@ export function createZ80Map(): OpcodeMap {
   addImpli(map, "push", matcher("bc"), 0xc5);
   addImpli(map, "push", matcher("de"), 0xd5);
   addImpli(map, "push", matcher("hl"), 0xe5);
+  addImpl2(map, "push", matcher("ix"), 0xdd, 0xe5);
+  addImpl2(map, "push", matcher("iy"), 0xfd, 0xe5);
   addImpli(map, "push", matcher("af"), 0xf5);
   addImpli(map, "pop", matcher("bc"), 0xc1);
   addImpli(map, "pop", matcher("de"), 0xd1);
   addImpli(map, "pop", matcher("hl"), 0xe1);
+  addImpl2(map, "pop", matcher("ix"), 0xdd, 0xe1);
+  addImpl2(map, "pop", matcher("iy"), 0xfd, 0xe1);
   addImpli(map, "pop", matcher("af"), 0xf1);
 
   addImpli(map, "jp", matcher("(hl)"), 0xe9);
+  addImpl2(map, "jp", matcher("(ix)"), 0xdd, 0xe9);
+  addImpl2(map, "jp", matcher("(iy)"), 0xfd, 0xe9);
   for(let [i, c] of conds.entries()) addGener(map, "jp", matcher(c + ",", ""), 0xc2 + (i * 8), AdrMode.ABS);
   addGener(map, "jp", matcher("", ""), 0xc3, AdrMode.ABS);
 
@@ -193,6 +242,8 @@ export function createZ80Map(): OpcodeMap {
 
   addImpli(map, "ex", matcher("af,af'"), 0x08);
   addImpli(map, "ex", matcher("(sp),hl"), 0xe3);
+  addImpl2(map, "ex", matcher("(sp),ix"), 0xdd, 0xe3);
+  addImpl2(map, "ex", matcher("(sp),iy"), 0xfd, 0xe3);
   addImpli(map, "ex", matcher("de,hl"), 0xeb);
   addImpli(map, "exx", matcher(""), 0xd9);
 
@@ -264,4 +315,13 @@ function addBitOp(map: OpcodeMap, opcode: string, match: string[][], val: number
 
 function addIxyIm(map: OpcodeMap, opcode: string, match: string[][], prefix: number): void {
   addItem(map, opcode, {match, adrs: [AdrMode.IMM8S, AdrMode.IMM8], vals: [prefix, 0x36], argMap: [-1, -2, 1, 2]});
+}
+
+function addIxyBt(map: OpcodeMap, opcode: string, match: string[][], prefix: number, val: number): void {
+  addItem(map, opcode, {match, adrs: [AdrMode.IMM8S], vals: [prefix, 0xcb, val], argMap: [-1, -2, 1, -3]});
+}
+
+function addBitXy(map: OpcodeMap, opcode: string, match: string[][], prefix: number, val: number): void {
+  let vals = [val, val + 0x8, val + 0x10, val + 0x18, val + 0x20, val + 0x28, val + 0x30, val + 0x38];
+  addItem(map, opcode, {match, adrs: [AdrMode.IMM3PO, AdrMode.IMM8S], vals: [prefix, 0xcb, vals], argMap: [-1, -2, 2, -3]});
 }
