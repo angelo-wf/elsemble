@@ -166,7 +166,7 @@ mov a, $1234
 mov a, (x)
 mov a, ($12 + x)
 mov a, #$12
-mov x, $1235
+mov x, $1234
 mov a, $12 + x
 mov a, $1234 + x
 mov a, $1234 + y

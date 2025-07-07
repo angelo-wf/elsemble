@@ -45,7 +45,21 @@
       3d f1 12          sbc ($12), y
       3f                
       3f 02             stp
+      40                ; 12
+      40                ; 22
+      40                ; 32
+      40                ; 42
+      40                ; 52
+      40                ; 62
+      40                ; 72
+      40                ; 82
+      40                ; 92
       40 a2 12          ldx #$12
+      42                ; b2
+      42                ; c2
+      42                ; d2
+      42                ; e2
+      42                ; f2
       42                
       42 03 12          slo ($12, x)
       44 13 12          slo ($12), y
@@ -67,12 +81,19 @@
       62 04 12          nop $12
       64 14 12          nop $12, x
       66 24 12          bit $12
+      68                ; 34
+      68                ; 44
+      68                ; 54
+      68                ; 64
+      68                ; 74
       68 84 12          sty $12
       6a 94 12          sty $12, x
       6c a4 12          ldy $12
       6e b4 12          ldy $12, x
       70 c4 12          cpy $12
+      72                ; d4
       72 e4 12          cpx $12
+      74                ; f4
       74                
       74 05 12          ora $12
       76 15 12          ora $12, x
@@ -150,6 +171,7 @@
       f0 59 34 12       eor $1234, y
       f3 69 12          adc #$12
       f5 79 34 12       adc $1234, y
+      f8                ; 89
       f8 99 34 12       sta $1234, y
       fb a9 12          lda #$12
       fd b9 34 12       lda $1234, y
@@ -159,18 +181,25 @@
      107 f9 34 12       sbc $1234, y
      10a                
      10a 0a             asl
+     10b                ; 1a
      10b 2a             rol
+     10c                ; 3a
      10c 4a             lsr
+     10d                ; 5a
      10d 6a             ror
+     10e                ; 7a
      10e 8a             txa
      10f 9a             txs
      110 aa             tax
      111 ba             tsx
      112 ca             dex
+     113                ; da
      113 ea             nop
+     114                ; fa
      114                
      114 0b 12          anc #$12
      116 1b 34 12       slo $1234, y
+     119                ; 2b
      119 3b 34 12       rla $1234, y
      11c 4b 12          alr #$12
      11e 5b 34 12       sre $1234, y
@@ -182,19 +211,25 @@
      12d bb 34 12       las $1234, y
      130 cb 12          axs #$12
      132 db 34 12       dcp $1234, y
+     135                ; eb
      135 fb 34 12       isc $1234, y
      138                
      138 0c 34 12       nop $1234
      13b 1c 34 12       nop $1234, x
      13e 2c 34 12       bit $1234
+     141                ; 3c
      141 4c 34 12       jmp $1234
+     144                ; 5c
      144 6c 34 12       jmp ($1234)
+     147                ; 7c
      147 8c 34 12       sty $1234
      14a 9c 34 12       shy $1234, x
      14d ac 34 12       ldy $1234
      150 bc 34 12       ldy $1234, x
      153 cc 34 12       cpy $1234
+     156                ; dc
      156 ec 34 12       cpx $1234
+     159                ; fc
      159                
      159 0d 34 12       ora $1234
      15c 1d 34 12       ora $1234, x
@@ -710,7 +745,7 @@
      13a e6             mov a, (x)
      13b e7 12          mov a, ($12 + x)
      13d e8 12          mov a, #$12
-     13f e9 35 12       mov x, $1235
+     13f e9 34 12       mov x, $1234
      142 f4 12          mov a, $12 + x
      144 f5 34 12       mov a, $1234 + x
      147 f6 34 12       mov a, $1234 + y
@@ -820,9 +855,1172 @@
      205 ef             sleep
      206 ff             stop
      207                
+     207                .include "arch/z80.s"
      207                
-     207                .arch m6502
-     207                .org $8000
+     207                .arch z80
+     207                .org 0
+       0                
+       0 00             nop
+       1 10 12          djnz * + $14
+       3 20 12          jr nz, * + $14
+       5 30 12          jr nc, * + $14
+       7 01 34 12       ld bc, $1234
+       a 11 34 12       ld de, $1234
+       d 21 34 12       ld hl, $1234
+      10 dd 21 34 12    ld ix, $1234
+      14 fd 21 34 12    ld iy, $1234
+      18 31 34 12       ld sp, $1234
+      1b 02             ld (bc), a
+      1c 12             ld (de), a
+      1d 22 34 12       ld ($1234), hl
+      20 dd 22 34 12    ld ($1234), ix
+      24 fd 22 34 12    ld ($1234), iy
+      28 32 34 12       ld ($1234), a
+      2b 03             inc bc
+      2c 13             inc de
+      2d 23             inc hl
+      2e dd 23          inc ix
+      30 fd 23          inc iy
+      32 33             inc sp
+      33 04             inc b
+      34 14             inc d
+      35 24             inc h
+      36 dd 24          inc ixh
+      38 fd 24          inc iyh
+      3a 34             inc (hl)
+      3b dd 34 12       inc (ix + $12)
+      3e fd 34 12       inc (iy + $12)
+      41 05             dec b
+      42 15             dec d
+      43 25             dec h
+      44 dd 25          dec ixh
+      46 fd 25          dec iyh
+      48 35             dec (hl)
+      49 dd 35 12       dec (ix + $12)
+      4c fd 35 12       dec (iy + $12)
+      4f 06 12          ld b, $12
+      51 16 12          ld d, $12
+      53 26 12          ld h, $12
+      55 dd 26 12       ld ixh, $12
+      58 fd 26 12       ld iyh, $12
+      5b 36 12          ld (hl), $12
+      5d dd 36 12 34    ld (ix + $12), $34
+      61 fd 36 12 34    ld (iy + $12), $34
+      65 07             rlca
+      66 17             rla
+      67 27             daa
+      68 37             scf
+      69 08             ex af, af' ;'
+      6a 18 12          jr * + $14
+      6c 28 12          jr z, * + $14
+      6e 38 12          jr c, * + $14
+      70 09             add hl, bc
+      71 dd 09          add ix, bc
+      73 fd 09          add iy, bc
+      75 19             add hl, de
+      76 dd 19          add ix, de
+      78 fd 19          add iy, de
+      7a 29             add hl, hl
+      7b dd 29          add ix, ix
+      7d fd 29          add iy, iy
+      7f 39             add hl, sp
+      80 dd 39          add ix, sp
+      82 fd 39          add iy, sp
+      84 0a             ld a, (bc)
+      85 1a             ld a, (de)
+      86 2a 34 12       ld hl, ($1234)
+      89 dd 2a 34 12    ld ix, ($1234)
+      8d fd 2a 34 12    ld iy, ($1234)
+      91 3a 34 12       ld a, ($1234)
+      94 0b             dec bc
+      95 1b             dec de
+      96 2b             dec hl
+      97 dd 2b          dec ix
+      99 fd 2b          dec iy
+      9b 3b             dec sp
+      9c 0c             inc c
+      9d 1c             inc e
+      9e 2c             inc l
+      9f dd 2c          inc ixl
+      a1 fd 2c          inc iyl
+      a3 3c             inc a
+      a4 0d             dec c
+      a5 1d             dec e
+      a6 2d             dec l
+      a7 dd 2d          dec ixl
+      a9 fd 2d          dec iyl
+      ab 3d             dec a
+      ac 0e 12          ld c, $12
+      ae 1e 12          ld e, $12
+      b0 2e 12          ld l, $12
+      b2 dd 2e 12       ld ixl, $12
+      b5 fd 2e 12       ld iyl, $12
+      b8 3e 12          ld a, $12
+      ba 0f             rrca
+      bb 1f             rra
+      bc 2f             cpl
+      bd 3f             ccf
+      be                
+      be 40             ld b, b
+      bf 41             ld b, c
+      c0 42             ld b, d
+      c1 43             ld b, e
+      c2 44             ld b, h
+      c3 dd 44          ld b, ixh
+      c5 fd 44          ld b, iyh
+      c7 45             ld b, l
+      c8 dd 45          ld b, ixl
+      ca fd 45          ld b, iyl
+      cc 46             ld b, (hl)
+      cd dd 46 12       ld b, (ix + $12)
+      d0 fd 46 12       ld b, (iy + $12)
+      d3 47             ld b, a
+      d4 48             ld c, b
+      d5 49             ld c, c
+      d6 4a             ld c, d
+      d7 4b             ld c, e
+      d8 4c             ld c, h
+      d9 dd 4c          ld c, ixh
+      db fd 4c          ld c, iyh
+      dd 4d             ld c, l
+      de dd 4d          ld c, ixl
+      e0 fd 4d          ld c, iyl
+      e2 4e             ld c, (hl)
+      e3 dd 4e 12       ld c, (ix + $12)
+      e6 fd 4e 12       ld c, (iy + $12)
+      e9 4f             ld c, a
+      ea 50             ld d, b
+      eb 51             ld d, c
+      ec 52             ld d, d
+      ed 53             ld d, e
+      ee 54             ld d, h
+      ef dd 54          ld d, ixh
+      f1 fd 54          ld d, iyh
+      f3 55             ld d, l
+      f4 dd 55          ld d, ixl
+      f6 fd 55          ld d, iyl
+      f8 56             ld d, (hl)
+      f9 dd 56 12       ld d, (ix + $12)
+      fc fd 56 12       ld d, (iy + $12)
+      ff 57             ld d, a
+     100 58             ld e, b
+     101 59             ld e, c
+     102 5a             ld e, d
+     103 5b             ld e, e
+     104 5c             ld e, h
+     105 dd 5c          ld e, ixh
+     107 fd 5c          ld e, iyh
+     109 5d             ld e, l
+     10a dd 5d          ld e, ixl
+     10c fd 5d          ld e, iyl
+     10e 5e             ld e, (hl)
+     10f dd 5e 12       ld e, (ix + $12)
+     112 fd 5e 12       ld e, (iy + $12)
+     115 5f             ld e, a
+     116 60             ld h, b
+     117 61             ld h, c
+     118 62             ld h, d
+     119 63             ld h, e
+     11a 64             ld h, h
+     11b dd 64          ld ixh, ixh
+     11d fd 64          ld iyh, iyh
+     11f 65             ld h, l
+     120 dd 65          ld ixh, ixl
+     122 fd 65          ld iyh, iyl
+     124 66             ld h, (hl)
+     125 dd 66 12       ld h, (ix + $12)
+     128 fd 66 12       ld h, (iy + $12)
+     12b 67             ld h, a
+     12c 68             ld l, b
+     12d 69             ld l, c
+     12e 6a             ld l, d
+     12f 6b             ld l, e
+     130 6c             ld l, h
+     131 dd 6c          ld ixl, ixh
+     133 fd 6c          ld iyl, iyh
+     135 6d             ld l, l
+     136 dd 6d          ld ixl, ixl
+     138 fd 6d          ld iyl, iyl
+     13a 6e             ld l, (hl)
+     13b dd 6e 12       ld l, (ix + $12)
+     13e fd 6e 12       ld l, (iy + $12)
+     141 6f             ld l, a
+     142 70             ld (hl), b
+     143 dd 70 12       ld (ix + $12), b
+     146 fd 70 12       ld (iy + $12), b
+     149 71             ld (hl), c
+     14a dd 71 12       ld (ix + $12), c
+     14d fd 71 12       ld (iy + $12), c
+     150 72             ld (hl), d
+     151 dd 72 12       ld (ix + $12), d
+     154 fd 72 12       ld (iy + $12), d
+     157 73             ld (hl), e
+     158 dd 73 12       ld (ix + $12), e
+     15b fd 73 12       ld (iy + $12), e
+     15e 74             ld (hl), h
+     15f dd 74 12       ld (ix + $12), h
+     162 fd 74 12       ld (iy + $12), h
+     165 75             ld (hl), l
+     166 dd 75 12       ld (ix + $12), l
+     169 fd 75 12       ld (iy + $12), l
+     16c 76             halt
+     16d 77             ld (hl), a
+     16e dd 77 12       ld (ix + $12), a
+     171 fd 77 12       ld (iy + $12), a
+     174 78             ld a, b
+     175 79             ld a, c
+     176 7a             ld a, d
+     177 7b             ld a, e
+     178 7c             ld a, h
+     179 dd 7c          ld a, ixh
+     17b fd 7c          ld a, iyh
+     17d 7d             ld a, l
+     17e dd 7d          ld a, ixl
+     180 fd 7d          ld a, iyl
+     182 7e             ld a, (hl)
+     183 dd 7e 12       ld a, (ix + $12)
+     186 fd 7e 12       ld a, (iy + $12)
+     189 7f             ld a, a
+     18a                
+     18a 80             add a, b
+     18b 81             add a, c
+     18c 82             add a, d
+     18d 83             add a, e
+     18e 84             add a, h
+     18f dd 84          add a, ixh
+     191 fd 84          add a, iyh
+     193 85             add a, l
+     194 dd 85          add a, ixl
+     196 fd 85          add a, iyl
+     198 86             add a, (hl)
+     199 dd 86 12       add a, (ix + $12)
+     19c fd 86 12       add a, (iy + $12)
+     19f 87             add a, a
+     1a0 88             adc a, b
+     1a1 89             adc a, c
+     1a2 8a             adc a, d
+     1a3 8b             adc a, e
+     1a4 8c             adc a, h
+     1a5 dd 8c          adc a, ixh
+     1a7 fd 8c          adc a, iyh
+     1a9 8d             adc a, l
+     1aa dd 8d          adc a, ixl
+     1ac fd 8d          adc a, iyl
+     1ae 8e             adc a, (hl)
+     1af dd 8e 12       adc a, (ix + $12)
+     1b2 fd 8e 12       adc a, (iy + $12)
+     1b5 8f             adc a, a
+     1b6 90             sub b
+     1b7 91             sub c
+     1b8 92             sub d
+     1b9 93             sub e
+     1ba 94             sub h
+     1bb dd 94          sub ixh
+     1bd fd 94          sub iyh
+     1bf 95             sub l
+     1c0 dd 95          sub ixl
+     1c2 fd 95          sub iyl
+     1c4 96             sub (hl)
+     1c5 dd 96 12       sub (ix + $12)
+     1c8 fd 96 12       sub (iy + $12)
+     1cb 97             sub a
+     1cc 98             sbc a, b
+     1cd 99             sbc a, c
+     1ce 9a             sbc a, d
+     1cf 9b             sbc a, e
+     1d0 9c             sbc a, h
+     1d1 dd 9c          sbc a, ixh
+     1d3 fd 9c          sbc a, iyh
+     1d5 9d             sbc a, l
+     1d6 dd 9d          sbc a, ixl
+     1d8 fd 9d          sbc a, iyl
+     1da 9e             sbc a, (hl)
+     1db dd 9e 12       sbc a, (ix + $12)
+     1de fd 9e 12       sbc a, (iy + $12)
+     1e1 9f             sbc a, a
+     1e2 a0             and b
+     1e3 a1             and c
+     1e4 a2             and d
+     1e5 a3             and e
+     1e6 a4             and h
+     1e7 dd a4          and ixh
+     1e9 fd a4          and iyh
+     1eb a5             and l
+     1ec dd a5          and ixl
+     1ee fd a5          and iyl
+     1f0 a6             and (hl)
+     1f1 dd a6 12       and (ix + $12)
+     1f4 fd a6 12       and (iy + $12)
+     1f7 a7             and a
+     1f8 a8             xor b
+     1f9 a9             xor c
+     1fa aa             xor d
+     1fb ab             xor e
+     1fc ac             xor h
+     1fd dd ac          xor ixh
+     1ff fd ac          xor iyh
+     201 ad             xor l
+     202 dd ad          xor ixl
+     204 fd ad          xor iyl
+     206 ae             xor (hl)
+     207 dd ae 12       xor (ix + $12)
+     20a fd ae 12       xor (iy + $12)
+     20d af             xor a
+     20e b0             or b
+     20f b1             or c
+     210 b2             or d
+     211 b3             or e
+     212 b4             or h
+     213 dd b4          or ixh
+     215 fd b4          or iyh
+     217 b5             or l
+     218 dd b5          or ixl
+     21a fd b5          or iyl
+     21c b6             or (hl)
+     21d dd b6 12       or (ix + $12)
+     220 fd b6 12       or (iy + $12)
+     223 b7             or a
+     224 b8             cp b
+     225 b9             cp c
+     226 ba             cp d
+     227 bb             cp e
+     228 bc             cp h
+     229 dd bc          cp ixh
+     22b fd bc          cp iyh
+     22d bd             cp l
+     22e dd bd          cp ixl
+     230 fd bd          cp iyl
+     232 be             cp (hl)
+     233 dd be 12       cp (ix + $12)
+     236 fd be 12       cp (iy + $12)
+     239 bf             cp a
+     23a                
+     23a c0             ret nz
+     23b d0             ret nc
+     23c e0             ret po
+     23d f0             ret p
+     23e c1             pop bc
+     23f d1             pop de
+     240 e1             pop hl
+     241 dd e1          pop ix
+     243 fd e1          pop iy
+     245 f1             pop af
+     246 c2 34 12       jp nz, $1234
+     249 d2 34 12       jp nc, $1234
+     24c e2 34 12       jp po, $1234
+     24f f2 34 12       jp p, $1234
+     252 c3 34 12       jp $1234
+     255 d3 12          out ($12), a
+     257 e3             ex (sp), hl
+     258 dd e3          ex (sp), ix
+     25a fd e3          ex (sp), iy
+     25c f3             di
+     25d c4 34 12       call nz, $1234
+     260 d4 34 12       call nc, $1234
+     263 e4 34 12       call po, $1234
+     266 f4 34 12       call p, $1234
+     269 c5             push bc
+     26a d5             push de
+     26b e5             push hl
+     26c dd e5          push ix
+     26e fd e5          push iy
+     270 f5             push af
+     271 c6 12          add a, $12
+     273 d6 12          sub $12
+     275 e6 12          and $12
+     277 f6 12          or $12
+     279 c7             rst $00
+     27a d7             rst $10
+     27b e7             rst $20
+     27c f7             rst $30
+     27d c8             ret z
+     27e d8             ret c
+     27f e8             ret pe
+     280 f8             ret m
+     281 c9             ret
+     282 d9             exx
+     283 e9             jp (hl)
+     284 dd e9          jp (ix)
+     286 fd e9          jp (iy)
+     288 f9             ld sp, hl
+     289 dd f9          ld sp, ix
+     28b fd f9          ld sp, iy
+     28d ca 34 12       jp z, $1234
+     290 da 34 12       jp c, $1234
+     293 ea 34 12       jp pe, $1234
+     296 fa 34 12       jp m, $1234
+     299                ; cb
+     299 db 12          in a, ($12)
+     29b eb             ex de, hl
+     29c fb             ei
+     29d cc 34 12       call z, $1234
+     2a0 dc 34 12       call c, $1234
+     2a3 ec 34 12       call pe, $1234
+     2a6 fc 34 12       call m, $1234
+     2a9 cd 34 12       call $1234
+     2ac                ; dd
+     2ac                ; ed
+     2ac                ; fd
+     2ac ce 12          adc a, $12
+     2ae de 12          sbc a, $12
+     2b0 ee 12          xor $12
+     2b2 fe 12          cp $12
+     2b4 cf             rst $08
+     2b5 df             rst $18
+     2b6 ef             rst $28
+     2b7 ff             rst $38
+     2b8                
+     2b8                ; ed 00-3f
+     2b8 ed 40          in b, (c)
+     2ba ed 50          in d, (c)
+     2bc ed 60          in h, (c)
+     2be ed 70          in (c)
+     2c0 ed 41          out (c), b
+     2c2 ed 51          out (c), d
+     2c4 ed 61          out (c), h
+     2c6 ed 71          out (c), 0
+     2c8 ed 42          sbc hl, bc
+     2ca ed 52          sbc hl, de
+     2cc ed 62          sbc hl, hl
+     2ce ed 72          sbc hl, sp
+     2d0 ed 43 34 12    ld ($1234), bc
+     2d4 ed 53 34 12    ld ($1234), de
+     2d8                ; ed 63
+     2d8 ed 73 34 12    ld ($1234), sp
+     2dc ed 44          neg
+     2de                ; ed 54
+     2de                ; ed 64
+     2de                ; ed 74
+     2de ed 45          retn
+     2e0                ; ed 55
+     2e0                ; ed 65
+     2e0                ; ed 75
+     2e0 ed 46          im 0
+     2e2 ed 56          im 1
+     2e4                ; ed 66
+     2e4                ; ed 76
+     2e4 ed 47          ld i, a
+     2e6 ed 57          ld a, i
+     2e8 ed 67          rrd
+     2ea                ; ed 77
+     2ea ed 48          in c, (c)
+     2ec ed 58          in e, (c)
+     2ee ed 68          in l, (c)
+     2f0 ed 78          in a, (c)
+     2f2 ed 49          out (c), c
+     2f4 ed 59          out (c), e
+     2f6 ed 69          out (c), l
+     2f8 ed 79          out (c), a
+     2fa ed 4a          adc hl, bc
+     2fc ed 5a          adc hl, de
+     2fe ed 6a          adc hl, hl
+     300 ed 7a          adc hl, sp
+     302 ed 4b 34 12    ld bc, ($1234)
+     306 ed 5b 34 12    ld de, ($1234)
+     30a                ; ed 6b
+     30a ed 7b 34 12    ld sp, ($1234)
+     30e                ; ed 4c
+     30e                ; ed 5c
+     30e                ; ed 6c
+     30e                ; ed 7c
+     30e ed 4d          reti
+     310                ; ed 5d
+     310                ; ed 6d
+     310                ; ed 7d
+     310                ; ed 4e
+     310 ed 5e          im 2
+     312                ; ed 6e
+     312                ; ed 7e
+     312 ed 4f          ld r, a
+     314 ed 5f          ld a, r
+     316 ed 6f          rld
+     318                ; ed 7f
+     318                ; ed 80-9f
+     318 ed a0          ldi
+     31a ed a1          cpi
+     31c ed a2          ini
+     31e ed a3          outi
+     320                ; ed a4-a7
+     320 ed a8          ldd
+     322 ed a9          cpd
+     324 ed aa          ind
+     326 ed ab          outd
+     328                ; ed ac-af
+     328 ed b0          ldir
+     32a ed b1          cpir
+     32c ed b2          inir
+     32e ed b3          otir
+     330                ; ed b4-b7
+     330 ed b8          lddr
+     332 ed b9          cpdr
+     334 ed ba          indr
+     336 ed bb          otdr
+     338                ; ed bc-bf
+     338                ; ed c0-ff
+     338                
+     338 cb 00          rlc b
+     33a dd cb 12 00    rlc (ix + $12), b
+     33e fd cb 12 00    rlc (iy + $12), b
+     342 cb 01          rlc c
+     344 dd cb 12 01    rlc (ix + $12), c
+     348 fd cb 12 01    rlc (iy + $12), c
+     34c cb 02          rlc d
+     34e dd cb 12 02    rlc (ix + $12), d
+     352 fd cb 12 02    rlc (iy + $12), d
+     356 cb 03          rlc e
+     358 dd cb 12 03    rlc (ix + $12), e
+     35c fd cb 12 03    rlc (iy + $12), e
+     360 cb 04          rlc h
+     362 dd cb 12 04    rlc (ix + $12), h
+     366 fd cb 12 04    rlc (iy + $12), h
+     36a cb 05          rlc l
+     36c dd cb 12 05    rlc (ix + $12), l
+     370 fd cb 12 05    rlc (iy + $12), l
+     374 cb 06          rlc (hl)
+     376 dd cb 12 06    rlc (ix + $12)
+     37a fd cb 12 06    rlc (iy + $12)
+     37e cb 07          rlc a
+     380 dd cb 12 07    rlc (ix + $12), a
+     384 fd cb 12 07    rlc (iy + $12), a
+     388 cb 08          rrc b
+     38a dd cb 12 08    rrc (ix + $12), b
+     38e fd cb 12 08    rrc (iy + $12), b
+     392 cb 09          rrc c
+     394 dd cb 12 09    rrc (ix + $12), c
+     398 fd cb 12 09    rrc (iy + $12), c
+     39c cb 0a          rrc d
+     39e dd cb 12 0a    rrc (ix + $12), d
+     3a2 fd cb 12 0a    rrc (iy + $12), d
+     3a6 cb 0b          rrc e
+     3a8 dd cb 12 0b    rrc (ix + $12), e
+     3ac fd cb 12 0b    rrc (iy + $12), e
+     3b0 cb 0c          rrc h
+     3b2 dd cb 12 0c    rrc (ix + $12), h
+     3b6 fd cb 12 0c    rrc (iy + $12), h
+     3ba cb 0d          rrc l
+     3bc dd cb 12 0d    rrc (ix + $12), l
+     3c0 fd cb 12 0d    rrc (iy + $12), l
+     3c4 cb 0e          rrc (hl)
+     3c6 dd cb 12 0e    rrc (ix + $12)
+     3ca fd cb 12 0e    rrc (iy + $12)
+     3ce cb 0f          rrc a
+     3d0 dd cb 12 0f    rrc (ix + $12), a
+     3d4 fd cb 12 0f    rrc (iy + $12), a
+     3d8 cb 10          rl b
+     3da dd cb 12 10    rl (ix + $12), b
+     3de fd cb 12 10    rl (iy + $12), b
+     3e2 cb 11          rl c
+     3e4 dd cb 12 11    rl (ix + $12), c
+     3e8 fd cb 12 11    rl (iy + $12), c
+     3ec cb 12          rl d
+     3ee dd cb 12 12    rl (ix + $12), d
+     3f2 fd cb 12 12    rl (iy + $12), d
+     3f6 cb 13          rl e
+     3f8 dd cb 12 13    rl (ix + $12), e
+     3fc fd cb 12 13    rl (iy + $12), e
+     400 cb 14          rl h
+     402 dd cb 12 14    rl (ix + $12), h
+     406 fd cb 12 14    rl (iy + $12), h
+     40a cb 15          rl l
+     40c dd cb 12 15    rl (ix + $12), l
+     410 fd cb 12 15    rl (iy + $12), l
+     414 cb 16          rl (hl)
+     416 dd cb 12 16    rl (ix + $12)
+     41a fd cb 12 16    rl (iy + $12)
+     41e cb 17          rl a
+     420 dd cb 12 17    rl (ix + $12), a
+     424 fd cb 12 17    rl (iy + $12), a
+     428 cb 18          rr b
+     42a dd cb 12 18    rr (ix + $12), b
+     42e fd cb 12 18    rr (iy + $12), b
+     432 cb 19          rr c
+     434 dd cb 12 19    rr (ix + $12), c
+     438 fd cb 12 19    rr (iy + $12), c
+     43c cb 1a          rr d
+     43e dd cb 12 1a    rr (ix + $12), d
+     442 fd cb 12 1a    rr (iy + $12), d
+     446 cb 1b          rr e
+     448 dd cb 12 1b    rr (ix + $12), e
+     44c fd cb 12 1b    rr (iy + $12), e
+     450 cb 1c          rr h
+     452 dd cb 12 1c    rr (ix + $12), h
+     456 fd cb 12 1c    rr (iy + $12), h
+     45a cb 1d          rr l
+     45c dd cb 12 1d    rr (ix + $12), l
+     460 fd cb 12 1d    rr (iy + $12), l
+     464 cb 1e          rr (hl)
+     466 dd cb 12 1e    rr (ix + $12)
+     46a fd cb 12 1e    rr (iy + $12)
+     46e cb 1f          rr a
+     470 dd cb 12 1f    rr (ix + $12), a
+     474 fd cb 12 1f    rr (iy + $12), a
+     478 cb 20          sla b
+     47a dd cb 12 20    sla (ix + $12), b
+     47e fd cb 12 20    sla (iy + $12), b
+     482 cb 21          sla c
+     484 dd cb 12 21    sla (ix + $12), c
+     488 fd cb 12 21    sla (iy + $12), c
+     48c cb 22          sla d
+     48e dd cb 12 22    sla (ix + $12), d
+     492 fd cb 12 22    sla (iy + $12), d
+     496 cb 23          sla e
+     498 dd cb 12 23    sla (ix + $12), e
+     49c fd cb 12 23    sla (iy + $12), e
+     4a0 cb 24          sla h
+     4a2 dd cb 12 24    sla (ix + $12), h
+     4a6 fd cb 12 24    sla (iy + $12), h
+     4aa cb 25          sla l
+     4ac dd cb 12 25    sla (ix + $12), l
+     4b0 fd cb 12 25    sla (iy + $12), l
+     4b4 cb 26          sla (hl)
+     4b6 dd cb 12 26    sla (ix + $12)
+     4ba fd cb 12 26    sla (iy + $12)
+     4be cb 27          sla a
+     4c0 dd cb 12 27    sla (ix + $12), a
+     4c4 fd cb 12 27    sla (iy + $12), a
+     4c8 cb 28          sra b
+     4ca dd cb 12 28    sra (ix + $12), b
+     4ce fd cb 12 28    sra (iy + $12), b
+     4d2 cb 29          sra c
+     4d4 dd cb 12 29    sra (ix + $12), c
+     4d8 fd cb 12 29    sra (iy + $12), c
+     4dc cb 2a          sra d
+     4de dd cb 12 2a    sra (ix + $12), d
+     4e2 fd cb 12 2a    sra (iy + $12), d
+     4e6 cb 2b          sra e
+     4e8 dd cb 12 2b    sra (ix + $12), e
+     4ec fd cb 12 2b    sra (iy + $12), e
+     4f0 cb 2c          sra h
+     4f2 dd cb 12 2c    sra (ix + $12), h
+     4f6 fd cb 12 2c    sra (iy + $12), h
+     4fa cb 2d          sra l
+     4fc dd cb 12 2d    sra (ix + $12), l
+     500 fd cb 12 2d    sra (iy + $12), l
+     504 cb 2e          sra (hl)
+     506 dd cb 12 2e    sra (ix + $12)
+     50a fd cb 12 2e    sra (iy + $12)
+     50e cb 2f          sra a
+     510 dd cb 12 2f    sra (ix + $12), a
+     514 fd cb 12 2f    sra (iy + $12), a
+     518 cb 30          sll b
+     51a dd cb 12 30    sll (ix + $12), b
+     51e fd cb 12 30    sll (iy + $12), b
+     522 cb 31          sll c
+     524 dd cb 12 31    sll (ix + $12), c
+     528 fd cb 12 31    sll (iy + $12), c
+     52c cb 32          sll d
+     52e dd cb 12 32    sll (ix + $12), d
+     532 fd cb 12 32    sll (iy + $12), d
+     536 cb 33          sll e
+     538 dd cb 12 33    sll (ix + $12), e
+     53c fd cb 12 33    sll (iy + $12), e
+     540 cb 34          sll h
+     542 dd cb 12 34    sll (ix + $12), h
+     546 fd cb 12 34    sll (iy + $12), h
+     54a cb 35          sll l
+     54c dd cb 12 35    sll (ix + $12), l
+     550 fd cb 12 35    sll (iy + $12), l
+     554 cb 36          sll (hl)
+     556 dd cb 12 36    sll (ix + $12)
+     55a fd cb 12 36    sll (iy + $12)
+     55e cb 37          sll a
+     560 dd cb 12 37    sll (ix + $12), a
+     564 fd cb 12 37    sll (iy + $12), a
+     568 cb 38          srl b
+     56a dd cb 12 38    srl (ix + $12), b
+     56e fd cb 12 38    srl (iy + $12), b
+     572 cb 39          srl c
+     574 dd cb 12 39    srl (ix + $12), c
+     578 fd cb 12 39    srl (iy + $12), c
+     57c cb 3a          srl d
+     57e dd cb 12 3a    srl (ix + $12), d
+     582 fd cb 12 3a    srl (iy + $12), d
+     586 cb 3b          srl e
+     588 dd cb 12 3b    srl (ix + $12), e
+     58c fd cb 12 3b    srl (iy + $12), e
+     590 cb 3c          srl h
+     592 dd cb 12 3c    srl (ix + $12), h
+     596 fd cb 12 3c    srl (iy + $12), h
+     59a cb 3d          srl l
+     59c dd cb 12 3d    srl (ix + $12), l
+     5a0 fd cb 12 3d    srl (iy + $12), l
+     5a4 cb 3e          srl (hl)
+     5a6 dd cb 12 3e    srl (ix + $12)
+     5aa fd cb 12 3e    srl (iy + $12)
+     5ae cb 3f          srl a
+     5b0 dd cb 12 3f    srl (ix + $12), a
+     5b4 fd cb 12 3f    srl (iy + $12), a
+     5b8                
+     5b8 cb 40          bit 0, b
+     5ba cb 41          bit 0, c
+     5bc cb 42          bit 0, d
+     5be cb 43          bit 0, e
+     5c0 cb 44          bit 0, h
+     5c2 cb 45          bit 0, l
+     5c4 cb 46          bit 0, (hl)
+     5c6 dd cb 12 46    bit 0, (ix + $12)
+     5ca fd cb 12 46    bit 0, (iy + $12)
+     5ce cb 47          bit 0, a
+     5d0 cb 48          bit 1, b
+     5d2 cb 49          bit 1, c
+     5d4 cb 4a          bit 1, d
+     5d6 cb 4b          bit 1, e
+     5d8 cb 4c          bit 1, h
+     5da cb 4d          bit 1, l
+     5dc cb 4e          bit 1, (hl)
+     5de dd cb 12 4e    bit 1, (ix + $12)
+     5e2 fd cb 12 4e    bit 1, (iy + $12)
+     5e6 cb 4f          bit 1, a
+     5e8 cb 50          bit 2, b
+     5ea cb 51          bit 2, c
+     5ec cb 52          bit 2, d
+     5ee cb 53          bit 2, e
+     5f0 cb 54          bit 2, h
+     5f2 cb 55          bit 2, l
+     5f4 cb 56          bit 2, (hl)
+     5f6 dd cb 12 56    bit 2, (ix + $12)
+     5fa fd cb 12 56    bit 2, (iy + $12)
+     5fe cb 57          bit 2, a
+     600 cb 58          bit 3, b
+     602 cb 59          bit 3, c
+     604 cb 5a          bit 3, d
+     606 cb 5b          bit 3, e
+     608 cb 5c          bit 3, h
+     60a cb 5d          bit 3, l
+     60c cb 5e          bit 3, (hl)
+     60e dd cb 12 5e    bit 3, (ix + $12)
+     612 fd cb 12 5e    bit 3, (iy + $12)
+     616 cb 5f          bit 3, a
+     618 cb 60          bit 4, b
+     61a cb 61          bit 4, c
+     61c cb 62          bit 4, d
+     61e cb 63          bit 4, e
+     620 cb 64          bit 4, h
+     622 cb 65          bit 4, l
+     624 cb 66          bit 4, (hl)
+     626 dd cb 12 66    bit 4, (ix + $12)
+     62a fd cb 12 66    bit 4, (iy + $12)
+     62e cb 67          bit 4, a
+     630 cb 68          bit 5, b
+     632 cb 69          bit 5, c
+     634 cb 6a          bit 5, d
+     636 cb 6b          bit 5, e
+     638 cb 6c          bit 5, h
+     63a cb 6d          bit 5, l
+     63c cb 6e          bit 5, (hl)
+     63e dd cb 12 6e    bit 5, (ix + $12)
+     642 fd cb 12 6e    bit 5, (iy + $12)
+     646 cb 6f          bit 5, a
+     648 cb 70          bit 6, b
+     64a cb 71          bit 6, c
+     64c cb 72          bit 6, d
+     64e cb 73          bit 6, e
+     650 cb 74          bit 6, h
+     652 cb 75          bit 6, l
+     654 cb 76          bit 6, (hl)
+     656 dd cb 12 76    bit 6, (ix + $12)
+     65a fd cb 12 76    bit 6, (iy + $12)
+     65e cb 77          bit 6, a
+     660 cb 78          bit 7, b
+     662 cb 79          bit 7, c
+     664 cb 7a          bit 7, d
+     666 cb 7b          bit 7, e
+     668 cb 7c          bit 7, h
+     66a cb 7d          bit 7, l
+     66c cb 7e          bit 7, (hl)
+     66e dd cb 12 7e    bit 7, (ix + $12)
+     672 fd cb 12 7e    bit 7, (iy + $12)
+     676 cb 7f          bit 7, a
+     678                
+     678 cb 80          res 0, b
+     67a dd cb 12 80    res 0, (ix + $12), b
+     67e fd cb 12 80    res 0, (iy + $12), b
+     682 cb 81          res 0, c
+     684 dd cb 12 81    res 0, (ix + $12), c
+     688 fd cb 12 81    res 0, (iy + $12), c
+     68c cb 82          res 0, d
+     68e dd cb 12 82    res 0, (ix + $12), d
+     692 fd cb 12 82    res 0, (iy + $12), d
+     696 cb 83          res 0, e
+     698 dd cb 12 83    res 0, (ix + $12), e
+     69c fd cb 12 83    res 0, (iy + $12), e
+     6a0 cb 84          res 0, h
+     6a2 dd cb 12 84    res 0, (ix + $12), h
+     6a6 fd cb 12 84    res 0, (iy + $12), h
+     6aa cb 85          res 0, l
+     6ac dd cb 12 85    res 0, (ix + $12), l
+     6b0 fd cb 12 85    res 0, (iy + $12), l
+     6b4 cb 86          res 0, (hl)
+     6b6 dd cb 12 86    res 0, (ix + $12)
+     6ba fd cb 12 86    res 0, (iy + $12)
+     6be cb 87          res 0, a
+     6c0 dd cb 12 87    res 0, (ix + $12), a
+     6c4 fd cb 12 87    res 0, (iy + $12), a
+     6c8 cb 88          res 1, b
+     6ca dd cb 12 88    res 1, (ix + $12), b
+     6ce fd cb 12 88    res 1, (iy + $12), b
+     6d2 cb 89          res 1, c
+     6d4 dd cb 12 89    res 1, (ix + $12), c
+     6d8 fd cb 12 89    res 1, (iy + $12), c
+     6dc cb 8a          res 1, d
+     6de dd cb 12 8a    res 1, (ix + $12), d
+     6e2 fd cb 12 8a    res 1, (iy + $12), d
+     6e6 cb 8b          res 1, e
+     6e8 dd cb 12 8b    res 1, (ix + $12), e
+     6ec fd cb 12 8b    res 1, (iy + $12), e
+     6f0 cb 8c          res 1, h
+     6f2 dd cb 12 8c    res 1, (ix + $12), h
+     6f6 fd cb 12 8c    res 1, (iy + $12), h
+     6fa cb 8d          res 1, l
+     6fc dd cb 12 8d    res 1, (ix + $12), l
+     700 fd cb 12 8d    res 1, (iy + $12), l
+     704 cb 8e          res 1, (hl)
+     706 dd cb 12 8e    res 1, (ix + $12)
+     70a fd cb 12 8e    res 1, (iy + $12)
+     70e cb 8f          res 1, a
+     710 dd cb 12 8f    res 1, (ix + $12), a
+     714 fd cb 12 8f    res 1, (iy + $12), a
+     718 cb 90          res 2, b
+     71a dd cb 12 90    res 2, (ix + $12), b
+     71e fd cb 12 90    res 2, (iy + $12), b
+     722 cb 91          res 2, c
+     724 dd cb 12 91    res 2, (ix + $12), c
+     728 fd cb 12 91    res 2, (iy + $12), c
+     72c cb 92          res 2, d
+     72e dd cb 12 92    res 2, (ix + $12), d
+     732 fd cb 12 92    res 2, (iy + $12), d
+     736 cb 93          res 2, e
+     738 dd cb 12 93    res 2, (ix + $12), e
+     73c fd cb 12 93    res 2, (iy + $12), e
+     740 cb 94          res 2, h
+     742 dd cb 12 94    res 2, (ix + $12), h
+     746 fd cb 12 94    res 2, (iy + $12), h
+     74a cb 95          res 2, l
+     74c dd cb 12 95    res 2, (ix + $12), l
+     750 fd cb 12 95    res 2, (iy + $12), l
+     754 cb 96          res 2, (hl)
+     756 dd cb 12 96    res 2, (ix + $12)
+     75a fd cb 12 96    res 2, (iy + $12)
+     75e cb 97          res 2, a
+     760 dd cb 12 97    res 2, (ix + $12), a
+     764 fd cb 12 97    res 2, (iy + $12), a
+     768 cb 98          res 3, b
+     76a dd cb 12 98    res 3, (ix + $12), b
+     76e fd cb 12 98    res 3, (iy + $12), b
+     772 cb 99          res 3, c
+     774 dd cb 12 99    res 3, (ix + $12), c
+     778 fd cb 12 99    res 3, (iy + $12), c
+     77c cb 9a          res 3, d
+     77e dd cb 12 9a    res 3, (ix + $12), d
+     782 fd cb 12 9a    res 3, (iy + $12), d
+     786 cb 9b          res 3, e
+     788 dd cb 12 9b    res 3, (ix + $12), e
+     78c fd cb 12 9b    res 3, (iy + $12), e
+     790 cb 9c          res 3, h
+     792 dd cb 12 9c    res 3, (ix + $12), h
+     796 fd cb 12 9c    res 3, (iy + $12), h
+     79a cb 9d          res 3, l
+     79c dd cb 12 9d    res 3, (ix + $12), l
+     7a0 fd cb 12 9d    res 3, (iy + $12), l
+     7a4 cb 9e          res 3, (hl)
+     7a6 dd cb 12 9e    res 3, (ix + $12)
+     7aa fd cb 12 9e    res 3, (iy + $12)
+     7ae cb 9f          res 3, a
+     7b0 dd cb 12 9f    res 3, (ix + $12), a
+     7b4 fd cb 12 9f    res 3, (iy + $12), a
+     7b8 cb a0          res 4, b
+     7ba dd cb 12 a0    res 4, (ix + $12), b
+     7be fd cb 12 a0    res 4, (iy + $12), b
+     7c2 cb a1          res 4, c
+     7c4 dd cb 12 a1    res 4, (ix + $12), c
+     7c8 fd cb 12 a1    res 4, (iy + $12), c
+     7cc cb a2          res 4, d
+     7ce dd cb 12 a2    res 4, (ix + $12), d
+     7d2 fd cb 12 a2    res 4, (iy + $12), d
+     7d6 cb a3          res 4, e
+     7d8 dd cb 12 a3    res 4, (ix + $12), e
+     7dc fd cb 12 a3    res 4, (iy + $12), e
+     7e0 cb a4          res 4, h
+     7e2 dd cb 12 a4    res 4, (ix + $12), h
+     7e6 fd cb 12 a4    res 4, (iy + $12), h
+     7ea cb a5          res 4, l
+     7ec dd cb 12 a5    res 4, (ix + $12), l
+     7f0 fd cb 12 a5    res 4, (iy + $12), l
+     7f4 cb a6          res 4, (hl)
+     7f6 dd cb 12 a6    res 4, (ix + $12)
+     7fa fd cb 12 a6    res 4, (iy + $12)
+     7fe cb a7          res 4, a
+     800 dd cb 12 a7    res 4, (ix + $12), a
+     804 fd cb 12 a7    res 4, (iy + $12), a
+     808 cb a8          res 5, b
+     80a dd cb 12 a8    res 5, (ix + $12), b
+     80e fd cb 12 a8    res 5, (iy + $12), b
+     812 cb a9          res 5, c
+     814 dd cb 12 a9    res 5, (ix + $12), c
+     818 fd cb 12 a9    res 5, (iy + $12), c
+     81c cb aa          res 5, d
+     81e dd cb 12 aa    res 5, (ix + $12), d
+     822 fd cb 12 aa    res 5, (iy + $12), d
+     826 cb ab          res 5, e
+     828 dd cb 12 ab    res 5, (ix + $12), e
+     82c fd cb 12 ab    res 5, (iy + $12), e
+     830 cb ac          res 5, h
+     832 dd cb 12 ac    res 5, (ix + $12), h
+     836 fd cb 12 ac    res 5, (iy + $12), h
+     83a cb ad          res 5, l
+     83c dd cb 12 ad    res 5, (ix + $12), l
+     840 fd cb 12 ad    res 5, (iy + $12), l
+     844 cb ae          res 5, (hl)
+     846 dd cb 12 ae    res 5, (ix + $12)
+     84a fd cb 12 ae    res 5, (iy + $12)
+     84e cb af          res 5, a
+     850 dd cb 12 af    res 5, (ix + $12), a
+     854 fd cb 12 af    res 5, (iy + $12), a
+     858 cb b0          res 6, b
+     85a dd cb 12 b0    res 6, (ix + $12), b
+     85e fd cb 12 b0    res 6, (iy + $12), b
+     862 cb b1          res 6, c
+     864 dd cb 12 b1    res 6, (ix + $12), c
+     868 fd cb 12 b1    res 6, (iy + $12), c
+     86c cb b2          res 6, d
+     86e dd cb 12 b2    res 6, (ix + $12), d
+     872 fd cb 12 b2    res 6, (iy + $12), d
+     876 cb b3          res 6, e
+     878 dd cb 12 b3    res 6, (ix + $12), e
+     87c fd cb 12 b3    res 6, (iy + $12), e
+     880 cb b4          res 6, h
+     882 dd cb 12 b4    res 6, (ix + $12), h
+     886 fd cb 12 b4    res 6, (iy + $12), h
+     88a cb b5          res 6, l
+     88c dd cb 12 b5    res 6, (ix + $12), l
+     890 fd cb 12 b5    res 6, (iy + $12), l
+     894 cb b6          res 6, (hl)
+     896 dd cb 12 b6    res 6, (ix + $12)
+     89a fd cb 12 b6    res 6, (iy + $12)
+     89e cb b7          res 6, a
+     8a0 dd cb 12 b7    res 6, (ix + $12), a
+     8a4 fd cb 12 b7    res 6, (iy + $12), a
+     8a8 cb b8          res 7, b
+     8aa dd cb 12 b8    res 7, (ix + $12), b
+     8ae fd cb 12 b8    res 7, (iy + $12), b
+     8b2 cb b9          res 7, c
+     8b4 dd cb 12 b9    res 7, (ix + $12), c
+     8b8 fd cb 12 b9    res 7, (iy + $12), c
+     8bc cb ba          res 7, d
+     8be dd cb 12 ba    res 7, (ix + $12), d
+     8c2 fd cb 12 ba    res 7, (iy + $12), d
+     8c6 cb bb          res 7, e
+     8c8 dd cb 12 bb    res 7, (ix + $12), e
+     8cc fd cb 12 bb    res 7, (iy + $12), e
+     8d0 cb bc          res 7, h
+     8d2 dd cb 12 bc    res 7, (ix + $12), h
+     8d6 fd cb 12 bc    res 7, (iy + $12), h
+     8da cb bd          res 7, l
+     8dc dd cb 12 bd    res 7, (ix + $12), l
+     8e0 fd cb 12 bd    res 7, (iy + $12), l
+     8e4 cb be          res 7, (hl)
+     8e6 dd cb 12 be    res 7, (ix + $12)
+     8ea fd cb 12 be    res 7, (iy + $12)
+     8ee cb bf          res 7, a
+     8f0 dd cb 12 bf    res 7, (ix + $12), a
+     8f4 fd cb 12 bf    res 7, (iy + $12), a
+     8f8                
+     8f8 cb c0          set 0, b
+     8fa dd cb 12 c0    set 0, (ix + $12), b
+     8fe fd cb 12 c0    set 0, (iy + $12), b
+     902 cb c1          set 0, c
+     904 dd cb 12 c1    set 0, (ix + $12), c
+     908 fd cb 12 c1    set 0, (iy + $12), c
+     90c cb c2          set 0, d
+     90e dd cb 12 c2    set 0, (ix + $12), d
+     912 fd cb 12 c2    set 0, (iy + $12), d
+     916 cb c3          set 0, e
+     918 dd cb 12 c3    set 0, (ix + $12), e
+     91c fd cb 12 c3    set 0, (iy + $12), e
+     920 cb c4          set 0, h
+     922 dd cb 12 c4    set 0, (ix + $12), h
+     926 fd cb 12 c4    set 0, (iy + $12), h
+     92a cb c5          set 0, l
+     92c dd cb 12 c5    set 0, (ix + $12), l
+     930 fd cb 12 c5    set 0, (iy + $12), l
+     934 cb c6          set 0, (hl)
+     936 dd cb 12 c6    set 0, (ix + $12)
+     93a fd cb 12 c6    set 0, (iy + $12)
+     93e cb c7          set 0, a
+     940 dd cb 12 c7    set 0, (ix + $12), a
+     944 fd cb 12 c7    set 0, (iy + $12), a
+     948 cb c8          set 1, b
+     94a dd cb 12 c8    set 1, (ix + $12), b
+     94e fd cb 12 c8    set 1, (iy + $12), b
+     952 cb c9          set 1, c
+     954 dd cb 12 c9    set 1, (ix + $12), c
+     958 fd cb 12 c9    set 1, (iy + $12), c
+     95c cb ca          set 1, d
+     95e dd cb 12 ca    set 1, (ix + $12), d
+     962 fd cb 12 ca    set 1, (iy + $12), d
+     966 cb cb          set 1, e
+     968 dd cb 12 cb    set 1, (ix + $12), e
+     96c fd cb 12 cb    set 1, (iy + $12), e
+     970 cb cc          set 1, h
+     972 dd cb 12 cc    set 1, (ix + $12), h
+     976 fd cb 12 cc    set 1, (iy + $12), h
+     97a cb cd          set 1, l
+     97c dd cb 12 cd    set 1, (ix + $12), l
+     980 fd cb 12 cd    set 1, (iy + $12), l
+     984 cb ce          set 1, (hl)
+     986 dd cb 12 ce    set 1, (ix + $12)
+     98a fd cb 12 ce    set 1, (iy + $12)
+     98e cb cf          set 1, a
+     990 dd cb 12 cf    set 1, (ix + $12), a
+     994 fd cb 12 cf    set 1, (iy + $12), a
+     998 cb d0          set 2, b
+     99a dd cb 12 d0    set 2, (ix + $12), b
+     99e fd cb 12 d0    set 2, (iy + $12), b
+     9a2 cb d1          set 2, c
+     9a4 dd cb 12 d1    set 2, (ix + $12), c
+     9a8 fd cb 12 d1    set 2, (iy + $12), c
+     9ac cb d2          set 2, d
+     9ae dd cb 12 d2    set 2, (ix + $12), d
+     9b2 fd cb 12 d2    set 2, (iy + $12), d
+     9b6 cb d3          set 2, e
+     9b8 dd cb 12 d3    set 2, (ix + $12), e
+     9bc fd cb 12 d3    set 2, (iy + $12), e
+     9c0 cb d4          set 2, h
+     9c2 dd cb 12 d4    set 2, (ix + $12), h
+     9c6 fd cb 12 d4    set 2, (iy + $12), h
+     9ca cb d5          set 2, l
+     9cc dd cb 12 d5    set 2, (ix + $12), l
+     9d0 fd cb 12 d5    set 2, (iy + $12), l
+     9d4 cb d6          set 2, (hl)
+     9d6 dd cb 12 d6    set 2, (ix + $12)
+     9da fd cb 12 d6    set 2, (iy + $12)
+     9de cb d7          set 2, a
+     9e0 dd cb 12 d7    set 2, (ix + $12), a
+     9e4 fd cb 12 d7    set 2, (iy + $12), a
+     9e8 cb d8          set 3, b
+     9ea dd cb 12 d8    set 3, (ix + $12), b
+     9ee fd cb 12 d8    set 3, (iy + $12), b
+     9f2 cb d9          set 3, c
+     9f4 dd cb 12 d9    set 3, (ix + $12), c
+     9f8 fd cb 12 d9    set 3, (iy + $12), c
+     9fc cb da          set 3, d
+     9fe dd cb 12 da    set 3, (ix + $12), d
+     a02 fd cb 12 da    set 3, (iy + $12), d
+     a06 cb db          set 3, e
+     a08 dd cb 12 db    set 3, (ix + $12), e
+     a0c fd cb 12 db    set 3, (iy + $12), e
+     a10 cb dc          set 3, h
+     a12 dd cb 12 dc    set 3, (ix + $12), h
+     a16 fd cb 12 dc    set 3, (iy + $12), h
+     a1a cb dd          set 3, l
+     a1c dd cb 12 dd    set 3, (ix + $12), l
+     a20 fd cb 12 dd    set 3, (iy + $12), l
+     a24 cb de          set 3, (hl)
+     a26 dd cb 12 de    set 3, (ix + $12)
+     a2a fd cb 12 de    set 3, (iy + $12)
+     a2e cb df          set 3, a
+     a30 dd cb 12 df    set 3, (ix + $12), a
+     a34 fd cb 12 df    set 3, (iy + $12), a
+     a38 cb e0          set 4, b
+     a3a dd cb 12 e0    set 4, (ix + $12), b
+     a3e fd cb 12 e0    set 4, (iy + $12), b
+     a42 cb e1          set 4, c
+     a44 dd cb 12 e1    set 4, (ix + $12), c
+     a48 fd cb 12 e1    set 4, (iy + $12), c
+     a4c cb e2          set 4, d
+     a4e dd cb 12 e2    set 4, (ix + $12), d
+     a52 fd cb 12 e2    set 4, (iy + $12), d
+     a56 cb e3          set 4, e
+     a58 dd cb 12 e3    set 4, (ix + $12), e
+     a5c fd cb 12 e3    set 4, (iy + $12), e
+     a60 cb e4          set 4, h
+     a62 dd cb 12 e4    set 4, (ix + $12), h
+     a66 fd cb 12 e4    set 4, (iy + $12), h
+     a6a cb e5          set 4, l
+     a6c dd cb 12 e5    set 4, (ix + $12), l
+     a70 fd cb 12 e5    set 4, (iy + $12), l
+     a74 cb e6          set 4, (hl)
+     a76 dd cb 12 e6    set 4, (ix + $12)
+     a7a fd cb 12 e6    set 4, (iy + $12)
+     a7e cb e7          set 4, a
+     a80 dd cb 12 e7    set 4, (ix + $12), a
+     a84 fd cb 12 e7    set 4, (iy + $12), a
+     a88 cb e8          set 5, b
+     a8a dd cb 12 e8    set 5, (ix + $12), b
+     a8e fd cb 12 e8    set 5, (iy + $12), b
+     a92 cb e9          set 5, c
+     a94 dd cb 12 e9    set 5, (ix + $12), c
+     a98 fd cb 12 e9    set 5, (iy + $12), c
+     a9c cb ea          set 5, d
+     a9e dd cb 12 ea    set 5, (ix + $12), d
+     aa2 fd cb 12 ea    set 5, (iy + $12), d
+     aa6 cb eb          set 5, e
+     aa8 dd cb 12 eb    set 5, (ix + $12), e
+     aac fd cb 12 eb    set 5, (iy + $12), e
+     ab0 cb ec          set 5, h
+     ab2 dd cb 12 ec    set 5, (ix + $12), h
+     ab6 fd cb 12 ec    set 5, (iy + $12), h
+     aba cb ed          set 5, l
+     abc dd cb 12 ed    set 5, (ix + $12), l
+     ac0 fd cb 12 ed    set 5, (iy + $12), l
+     ac4 cb ee          set 5, (hl)
+     ac6 dd cb 12 ee    set 5, (ix + $12)
+     aca fd cb 12 ee    set 5, (iy + $12)
+     ace cb ef          set 5, a
+     ad0 dd cb 12 ef    set 5, (ix + $12), a
+     ad4 fd cb 12 ef    set 5, (iy + $12), a
+     ad8 cb f0          set 6, b
+     ada dd cb 12 f0    set 6, (ix + $12), b
+     ade fd cb 12 f0    set 6, (iy + $12), b
+     ae2 cb f1          set 6, c
+     ae4 dd cb 12 f1    set 6, (ix + $12), c
+     ae8 fd cb 12 f1    set 6, (iy + $12), c
+     aec cb f2          set 6, d
+     aee dd cb 12 f2    set 6, (ix + $12), d
+     af2 fd cb 12 f2    set 6, (iy + $12), d
+     af6 cb f3          set 6, e
+     af8 dd cb 12 f3    set 6, (ix + $12), e
+     afc fd cb 12 f3    set 6, (iy + $12), e
+     b00 cb f4          set 6, h
+     b02 dd cb 12 f4    set 6, (ix + $12), h
+     b06 fd cb 12 f4    set 6, (iy + $12), h
+     b0a cb f5          set 6, l
+     b0c dd cb 12 f5    set 6, (ix + $12), l
+     b10 fd cb 12 f5    set 6, (iy + $12), l
+     b14 cb f6          set 6, (hl)
+     b16 dd cb 12 f6    set 6, (ix + $12)
+     b1a fd cb 12 f6    set 6, (iy + $12)
+     b1e cb f7          set 6, a
+     b20 dd cb 12 f7    set 6, (ix + $12), a
+     b24 fd cb 12 f7    set 6, (iy + $12), a
+     b28 cb f8          set 7, b
+     b2a dd cb 12 f8    set 7, (ix + $12), b
+     b2e fd cb 12 f8    set 7, (iy + $12), b
+     b32 cb f9          set 7, c
+     b34 dd cb 12 f9    set 7, (ix + $12), c
+     b38 fd cb 12 f9    set 7, (iy + $12), c
+     b3c cb fa          set 7, d
+     b3e dd cb 12 fa    set 7, (ix + $12), d
+     b42 fd cb 12 fa    set 7, (iy + $12), d
+     b46 cb fb          set 7, e
+     b48 dd cb 12 fb    set 7, (ix + $12), e
+     b4c fd cb 12 fb    set 7, (iy + $12), e
+     b50 cb fc          set 7, h
+     b52 dd cb 12 fc    set 7, (ix + $12), h
+     b56 fd cb 12 fc    set 7, (iy + $12), h
+     b5a cb fd          set 7, l
+     b5c dd cb 12 fd    set 7, (ix + $12), l
+     b60 fd cb 12 fd    set 7, (iy + $12), l
+     b64 cb fe          set 7, (hl)
+     b66 dd cb 12 fe    set 7, (ix + $12)
+     b6a fd cb 12 fe    set 7, (iy + $12)
+     b6e cb ff          set 7, a
+     b70 dd cb 12 ff    set 7, (ix + $12), a
+     b74 fd cb 12 ff    set 7, (iy + $12), a
+     b78                
+     b78                
+     b78                .arch m6502
+     b78                .org $8000
     8000                
     8000                ; line syntax tests
     8000                

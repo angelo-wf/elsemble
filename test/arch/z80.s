@@ -412,6 +412,7 @@ rst $18
 rst $28
 rst $38
 
+; ed 00-3f
 in b, (c)
 in d, (c)
 in h, (c)
@@ -476,23 +477,28 @@ ld r, a
 ld a, r
 rld
 ; ed 7f
-
+; ed 80-9f
 ldi
 cpi
 ini
 outi
+; ed a4-a7
 ldd
 cpd
 ind
 outd
+; ed ac-af
 ldir
 cpir
 inir
 otir
+; ed b4-b7
 lddr
 cpdr
 indr
 otdr
+; ed bc-bf
+; ed c0-ff
 
 rlc b
 rlc (ix + $12), b

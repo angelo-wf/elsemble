@@ -235,6 +235,7 @@ The following architectures are valid:
 - `m6502`: Assembles for the MOS 6502.
 - `w65816`: Assembles for the WDC 65816.
 - `spc700`: Assembles for Sony's SPC700 core.
+- `z80`: Assembles for the Zilog Z80.
 
 ## Architectures
 
@@ -299,3 +300,14 @@ The assemnler roughly uses the specified opcode formats, but does deviate in som
 The `.dirpage <value>` directive can be used to set the direct page value used for DP resolution to 0 or 256 ($100).
 
 When smart mode is enabled, the direct page value is updated automatically when `setp` and `clrp` opcodes are assembled.
+
+### Z80
+
+The assembler follows the general conventions for Z80 syntax. The following things are of note:
+- The undocumented opcodes are supported, using the following mnemonics:
+  - `sll` for the 1-shifting shift left.
+  - `in (c)` and `out (c), 0` for the in/out opcodes that do not affect a register.
+  - All the opcodes that use `h` or `l` (and not `(hl)`) also have the expected `ixh`/`iyh` and `ixl`/`iyl` versions.
+  - The bit-opcodes that affect both `(ix/iy+d)` and a register put the register as another argument (e.g. `sll (ix + d), c` or `set 4, (iy + d), h`).
+- The `(ix/iy)` opcodes support any expression after the `ix/iy`, the `+` is not required (this allows e.g. `ld (ix - 2), b` to be valid)
+- `out (c), 0` and `im 0/1/2` check for the literal `0/1/2` and do not support using an expression.

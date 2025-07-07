@@ -8,6 +8,7 @@
 .include "arch/m6502.s"
 .include "arch/w65816.s"
 .include "arch/spc700.s"
+.include "arch/z80.s"
 
 .arch m6502
 .org $8000

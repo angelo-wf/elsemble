@@ -37,7 +37,21 @@ sbc ($12, x)
 sbc ($12), y
 
 stp
+; 12
+; 22
+; 32
+; 42
+; 52
+; 62
+; 72
+; 82
+; 92
 ldx #$12
+; b2
+; c2
+; d2
+; e2
+; f2
 
 slo ($12, x)
 slo ($12), y
@@ -59,12 +73,19 @@ isc ($12), y
 nop $12
 nop $12, x
 bit $12
+; 34
+; 44
+; 54
+; 64
+; 74
 sty $12
 sty $12, x
 ldy $12
 ldy $12, x
 cpy $12
+; d4
 cpx $12
+; f4
 
 ora $12
 ora $12, x
@@ -142,6 +163,7 @@ eor #$12
 eor $1234, y
 adc #$12
 adc $1234, y
+; 89
 sta $1234, y
 lda #$12
 lda $1234, y
@@ -151,18 +173,25 @@ sbc #$12
 sbc $1234, y
 
 asl
+; 1a
 rol
+; 3a
 lsr
+; 5a
 ror
+; 7a
 txa
 txs
 tax
 tsx
 dex
+; da
 nop
+; fa
 
 anc #$12
 slo $1234, y
+; 2b
 rla $1234, y
 alr #$12
 sre $1234, y
@@ -174,19 +203,25 @@ lxa #$12
 las $1234, y
 axs #$12
 dcp $1234, y
+; eb
 isc $1234, y
 
 nop $1234
 nop $1234, x
 bit $1234
+; 3c
 jmp $1234
+; 5c
 jmp ($1234)
+; 7c
 sty $1234
 shy $1234, x
 ldy $1234
 ldy $1234, x
 cpy $1234
+; dc
 cpx $1234
+; fc
 
 ora $1234
 ora $1234, x
