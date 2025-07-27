@@ -22,6 +22,10 @@ See `DOC.md` for CLI arguments and assembly syntax/directves.
 
 Note that the exact syntax is not fully finalized and may change.
 
+## License
+
+Licensed under the MIT license. See `LICENSE.txt` for details.
+
 ## Future work
 
 - Functions (e.g. `min`, `strlen`, `select`, `slice`, `dec`, `asize`)
