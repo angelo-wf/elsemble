@@ -459,17 +459,17 @@ export class Assembler {
 
   // write byte
   writeByte(byte: number): void {
-    this.writeHandler.writeBytes(byte);
+    this.writeHandler.writeBytes([byte]);
   }
 
   // write word
   writeWord(word: number): void {
-    this.writeHandler.writeWords(word);
+    this.writeHandler.writeWords([word]);
   }
 
   // write long
   writeLong(long: number): void {
-    this.writeHandler.writeLongs(long);
+    this.writeHandler.writeLongs([long]);
   }
 
   // directive handling / helpers
@@ -683,31 +683,31 @@ export class Assembler {
 
   private dirDb(args: ExpressionNode[]): void {
     let vals = this.handleDefineArgs(args).map(n => this.checkRange(n, true, 8));
-    this.writeHandler.writeBytes(...vals);
+    this.writeHandler.writeBytes(vals);
     this.pc += vals.length;
   }
 
   private dirDw(args: ExpressionNode[]): void {
     let vals = this.handleDefineArgs(args).map(n => this.checkRange(n, true, 16));
-    this.writeHandler.writeWords(...vals);
+    this.writeHandler.writeWords(vals);
     this.pc += vals.length * 2;
   }
 
   private dirDl(args: ExpressionNode[]): void {
     let vals = this.handleDefineArgs(args).map(n => this.checkRange(n, true, 24));
-    this.writeHandler.writeLongs(...vals);
+    this.writeHandler.writeLongs(vals);
     this.pc += vals.length * 3;
   }
 
   private dirDxb(args: ExpressionNode[], shift: number): void {
     let vals = this.handleDefineArgs(args).map(n => (this.checkNumber(n) >> shift) & 0xff);
-    this.writeHandler.writeBytes(...vals);
+    this.writeHandler.writeBytes(vals);
     this.pc += vals.length;
   }
 
   private dirDlw(args: ExpressionNode[]): void {
     let vals = this.handleDefineArgs(args).map(n => this.checkNumber(n) & 0xffff);
-    this.writeHandler.writeWords(...vals);
+    this.writeHandler.writeWords(vals);
     this.pc += vals.length * 2;
   }
 
@@ -725,7 +725,7 @@ export class Assembler {
       if(countVal !== undefined) this.logError("Range beyond file length");
       countVal = data.length - startVal;
     }
-    this.writeHandler.writeBytes(...data.slice(startVal, startVal + countVal));
+    this.writeHandler.writeByteArray(data.slice(startVal, startVal + countVal));
     this.pc += countVal;
   }
 

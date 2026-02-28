@@ -76,14 +76,21 @@ export class WriteHandler {
   }
 
   // write bytes (assumed to be in range)
-  writeBytes(...bytes: number[]): void {
+  writeBytes(bytes: number[]): void {
     for(let byte of bytes) {
       this.output.push(byte & 0xff);
     }
   }
 
+  // write byte array
+  writeByteArray(bytes: Uint8Array): void {
+    for(let byte of bytes) {
+      this.output.push(byte);
+    }
+  }
+
   // write words (assumed to be in range)
-  writeWords(...words: number[]): void {
+  writeWords(words: number[]): void {
     for(let word of words) {
       this.output.push(word & 0xff);
       this.output.push((word >> 8) & 0xff);
@@ -91,7 +98,7 @@ export class WriteHandler {
   }
 
   // write longs (assumed to be in range)
-  writeLongs(...longs: number[]): void {
+  writeLongs(longs: number[]): void {
     for(let long of longs) {
       this.output.push(long & 0xff);
       this.output.push((long >> 8) & 0xff);
